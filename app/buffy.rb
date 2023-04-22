@@ -21,7 +21,25 @@ class Buffy < Sinatra::Base
     "#{settings.buffy[:env][:bot_github_user]} in #{settings.environment}: up and running!"
   end
 
+  # get '/' do
+  #   "👋🤖"
+  # end
+
   get '/' do
-    "👋🤖"
+    erb :neurolibre
   end
+
+  post '/neurolibre' do
+    "👋🤖"
+  #   sha = SecureRandom.hex
+  #   branch = params[:branch].empty? ? nil : params[:branch]
+  #   if params[:journal] == 'NeuroLibre paper'
+  #     job_id = PaperPreviewWorker.perform_async(params[:repository], params[:journal], branch, sha)
+  #   elsif params[:journal] == 'NeuroLibre notebooks'
+  #     #job_id = JBPreviewWorker.perform_async(params[:repository], params[:journal], branch, sha)
+  #     job_id = NLPreviewWorker.perform_async(params[:repository], params[:journal], params[:email], branch, sha)
+  #   end
+  #   redirect "/preview?id=#{job_id}"
+  # end
+
 end
