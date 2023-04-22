@@ -40,6 +40,6 @@ class Buffy < Sinatra::Base
   #     job_id = NLPreviewWorker.perform_async(params[:repository], params[:journal], params[:email], branch, sha)
   #   end
   #   redirect "/preview?id=#{job_id}"
-  # end
+  end
 
 end
