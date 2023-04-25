@@ -41,7 +41,7 @@ buffy:
         url: "https://joss.theoj.org/papers/api_assign_editor"
         method: post
         query_params:
-          secret: <%= ENV['JOSS_SECRET'] %>
+          secret: <%= ENV['JOURNAL_SECRET'] %>
         mapping:
           id: issue_id
           editor: editor
@@ -78,7 +78,7 @@ buffy:
             url: "https://joss.theoj.org/papers/api_update_paper_info"
             method: post
             query_params:
-              secret: <%= ENV['JOSS_SECRET'] %>
+              secret: <%= ENV['JOURNAL_SECRET'] %>
             mapping:
               id: issue_id
               repository_url: new_value
@@ -94,7 +94,7 @@ buffy:
           description: "Reject paper"
           url: "https://joss.theoj.org/papers/api_reject"
           query_params:
-            secret: <%= ENV['JOSS_SECRET'] %>
+            secret: <%= ENV['JOURNAL_SECRET'] %>
           mapping:
             id: issue_id
           add_labels:
@@ -108,7 +108,7 @@ buffy:
           description: "Withdraw paper"
           url: "https://joss.theoj.org/papers/api_withdraw"
           query_params:
-            secret: <%= ENV['JOSS_SECRET'] %>
+            secret: <%= ENV['JOURNAL_SECRET'] %>
           mapping:
             id: issue_id
           add_labels:
@@ -122,7 +122,7 @@ buffy:
           description: "Invite an editor to edit a submission (sending them an email)"
           url: "https://joss.theoj.org/papers/api_editor_invite"
           query_params:
-            secret: <%= ENV['JOSS_SECRET'] %>
+            secret: <%= ENV['JOURNAL_SECRET'] %>
           mapping:
             id: issue_id
             editor: match_data_1
@@ -267,7 +267,7 @@ buffy:
       external_call:
         url: "https://joss.theoj.org/papers/api_start_review"
         query_params:
-          secret: <%= ENV['JOSS_SECRET'] %>
+          secret: <%= ENV['JOURNAL_SECRET'] %>
         data_from_issue:
           - branch
         mapping:
