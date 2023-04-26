@@ -1,8 +1,8 @@
 buffy:
   env:
-    bot_github_user: 'botsci'
-    gh_access_token: 'secret-access'
-    gh_secret_token: 'secret-token'
+    bot_github_user: <%= ENV['BUFFY_BOT_GH_USER'] %>
+    gh_access_token: <%= ENV['BUFFY_GH_ACCESS_TOKEN'] %>
+    gh_secret_token: <%= ENV['BUFFY_GH_SECRET_TOKEN'] %>
   teams:
     editors: 3408147
     eics:
