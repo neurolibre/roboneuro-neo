@@ -3,8 +3,6 @@ buffy:
     bot_github_user: <%= ENV['BUFFY_BOT_GH_USER'] %>
     gh_access_token: <%= ENV['BUFFY_GH_ACCESS_TOKEN'] %>
     gh_secret_token: <%= ENV['BUFFY_GH_SECRET_TOKEN'] %>
-    reviewers_host_url: <%= ENV['REVIEWERS_HOST_URL'] %>
-    reviewers_api_token: <%= ENV['REVIEWERS_API_TOKEN'] %>
   teams:
     editors: 3408147
     eics: 7787695
@@ -32,13 +30,13 @@ buffy:
       add_as_assignee: true
     list_team_members:
       command: list editors
-      team_id: openjournals/joss-editors
-      heading: List of JOSS editors
+      team_id: 3408147
+      heading: List of NeuroLibre editors
       description: "Get a list of all editors's GitHub handles"
     assign_editor:
       only: editors
       external_call:
-        url: "https://joss.theoj.org/papers/api_assign_editor"
+        url: "https://neurolibre.org/papers/api_assign_editor"
         method: post
         query_params:
           secret: <%= ENV['JOURNAL_SECRET'] %>
@@ -52,10 +50,10 @@ buffy:
       only: editors
     check_references:
       description: "Check the references of the paper for missing DOIs"
-      example_invocation: "@editorialbot check references"
+      example_invocation: "@roboneuro check references"
     repo_checks:
       description: "Perform checks on the repository"
-      example_invocation: "@editorialbot check repository"
+      example_invocation: "@roboneuro check repository"
     reviewer_checklist_comment:
       if:
         title: "^\\[REVIEW\\]:"
@@ -69,13 +67,13 @@ buffy:
           only: editors
           sample_value: "v1.0.0"
       - branch:
-          sample_value: "joss-paper"
+          sample_value: "neurolibre-paper"
       - target-repository:
           only: editors
           sample_value: "https://github.com/organization/repo"
           aliased_as: repository
           external_call:
-            url: "https://joss.theoj.org/papers/api_update_paper_info"
+            url: "https://neurolibre.org/papers/api_update_paper_info"
             method: post
             query_params:
               secret: <%= ENV['JOURNAL_SECRET'] %>
@@ -92,7 +90,7 @@ buffy:
           only: eics
           command: reject
           description: "Reject paper"
-          url: "https://joss.theoj.org/papers/api_reject"
+          url: "https://neurolibre.org/papers/api_reject"
           query_params:
             secret: <%= ENV['JOURNAL_SECRET'] %>
           mapping:
@@ -106,7 +104,7 @@ buffy:
           only: eics
           command: withdraw
           description: "Withdraw paper"
-          url: "https://joss.theoj.org/papers/api_withdraw"
+          url: "https://neurolibre.org/papers/api_withdraw"
           query_params:
             secret: <%= ENV['JOURNAL_SECRET'] %>
           mapping:
@@ -120,7 +118,7 @@ buffy:
           only: eics
           command: "invite @(.*) as editor"
           description: "Invite an editor to edit a submission (sending them an email)"
-          url: "https://joss.theoj.org/papers/api_editor_invite"
+          url: "https://neurolibre.org/papers/api_editor_invite"
           query_params:
             secret: <%= ENV['JOURNAL_SECRET'] %>
           mapping:
@@ -131,7 +129,7 @@ buffy:
     github_action:
       - draft_paper:
           command: generate pdf
-          workflow_repo: openjournals/joss-papers
+          workflow_repo: neurolibre/preprints
           workflow_name: draft-paper.yml
           workflow_ref: master
           description: Generates the pdf paper
@@ -148,7 +146,7 @@ buffy:
             reject_msg: "Paper is not ready for acceptance yet, the archive is missing"
           only: editors
           command: recommend-accept
-          workflow_repo: openjournals/joss-papers
+          workflow_repo: neurolibre/preprints
           workflow_name: recommend-acceptance.yml
           workflow_ref: master
           description: Recommends the submission for acceptance
@@ -170,7 +168,7 @@ buffy:
             reject_msg: "Paper is not ready for acceptance yet, the archive is missing"
           only: eics
           command: accept
-          workflow_repo: openjournals/joss-papers
+          workflow_repo: neurolibre/preprints
           workflow_name: accept.yml
           workflow_ref: master
           description: Accept and publish the paper
@@ -190,7 +188,7 @@ buffy:
             reject_msg: "Can't rebuild paper, there's no value for archive"
           only: eics
           command: reaccept
-          workflow_repo: openjournals/joss-papers
+          workflow_repo: neurolibre/preprints
           workflow_name: reaccept.yml
           workflow_ref: master
           description: Update data on an accepted/published paper
@@ -203,7 +201,7 @@ buffy:
             repository_url: target-repository
       - preprint:
           command: generate preprint
-          workflow_repo: openjournals/joss-papers
+          workflow_repo: neurolibre/preprints
           workflow_name: preprint.yml
           workflow_ref: master
           description: Generates a LaTeX preprint file
@@ -265,7 +263,7 @@ buffy:
     external_start_review:
       only: editors
       external_call:
-        url: "https://joss.theoj.org/papers/api_start_review"
+        url: "https://neurolibre.org/papers/api_start_review"
         query_params:
           secret: <%= ENV['JOURNAL_SECRET'] %>
         data_from_issue:
