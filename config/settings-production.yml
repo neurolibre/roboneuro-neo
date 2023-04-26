@@ -49,7 +49,7 @@ buffy:
     reminders:
       only: editors
     check_references:
-      description: "Check the references of the paper for missing DOIs"
+      description: "Check the references of the PDF for missing DOIs"
       example_invocation: "@roboneuro check references"
     repo_checks:
       description: "Perform checks on the repository"
