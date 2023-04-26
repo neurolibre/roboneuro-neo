@@ -21,10 +21,6 @@ class Buffy < Sinatra::Base
     "#{settings.buffy[:env][:bot_github_user]} in #{settings.environment}: up and running!"
   end
 
-  # get '/' do
-  #   "👋🤖"
-  # end
-
   get '/' do
     erb :neurolibre
   end
