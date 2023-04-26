@@ -31,4 +31,4 @@ buffy:
       remove_labels:
         - pending review
     welcome:
-      message: "Hi!, I'm @botsci, a friendly bot.\n\nType ```@botsci help``` to discover how I can help you."
+      message: "Hi!, I'm @roboneuro, a friendly bot.\n\nType ```@roboneuro help``` to discover how I can help you."
