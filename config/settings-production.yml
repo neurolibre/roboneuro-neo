@@ -285,6 +285,4 @@ buffy:
           password: <%= ENV['PREVIEW_API_KEY'] %>
         mapping:
           id: issue_id
-        silent: true
-        template_file: "preview_custom.md"
-        close: true
+        silent: false
