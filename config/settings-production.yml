@@ -281,7 +281,7 @@ buffy:
         url: "https://preview.neurolibre.org/api/heartbeat"
         method: "get"
         query_params:
-          user: <%= ENV['PREVIEW_API_USER'] %>
+          username: <%= ENV['PREVIEW_API_USER'] %>
           password: <%= ENV['PREVIEW_API_KEY'] %>
         mapping:
           id: issue_id
