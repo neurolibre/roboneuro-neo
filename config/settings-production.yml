@@ -275,3 +275,15 @@ buffy:
         silent: true
         template_file: "review_started.md"
         close: true
+    nl_preview_responder:
+      only: editors
+      external_call:
+        url: "https://preview.neurolibre.org/api/heartbeat"
+        query_params:
+          user: <%= ENV['PREVIEW_API_USER'] %>
+          password: <%= ENV['PREVIEW_API_KEY'] %>
+        mapping:
+          id: issue_id
+        silent: true
+        template_file: "preview_custom.md"
+        close: true
