@@ -1,8 +1,8 @@
 require 'base64'
-require_relative '../lib/logging'
+# require_relative '../lib/logging'
 
 class ExternalServiceWorker < BuffyWorker
-  include Logging
+   # include Logging
 
   def perform(service, locals)
     load_context_and_env(locals)
@@ -32,7 +32,6 @@ class ExternalServiceWorker < BuffyWorker
 
     # @NeuroLibre add conditional auth
     if headers['username'] && headers['password']
-      @logger.info("Hit auth")
       headers = {'Authorization' => "Basic " + Base64.strict_encode64("#{headers['username']}:#{headers['password']}")}.merge(headers)
       headers.delete('username')
       headers.delete('password')
