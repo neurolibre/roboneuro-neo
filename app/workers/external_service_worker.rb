@@ -31,11 +31,11 @@ class ExternalServiceWorker < BuffyWorker
     parameters = {}.merge(query_parameters, mapped_parameters)
 
     # @NeuroLibre add conditional auth
-    if headers[:username] && headers[:password]
+    if headers['username'] && headers['password']
       @logger.info("Hit auth")
-      headers = {'Authorization' => "Basic " + Base64.strict_encode64("#{headers[:username]}:#{headers[:password]}")}.merge(headers)
-      headers.delete(:username)
-      headers.delete(:password)
+      headers = {'Authorization' => "Basic " + Base64.strict_encode64("#{headers['username']}:#{headers['password']}")}.merge(headers)
+      headers.delete('username')
+      headers.delete('password')
     end
 
     if http_method.downcase == 'get'
