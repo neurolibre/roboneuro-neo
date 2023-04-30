@@ -280,9 +280,7 @@ buffy:
       external_call:
         url: "https://preview.neurolibre.org/api/heartbeat"
         method: "get"
-        query_params:
+        headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
           password: <%= ENV['PREVIEW_API_KEY'] %>
-        mapping:
-          id: issue_id
         silent: false
