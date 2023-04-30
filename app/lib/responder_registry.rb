@@ -1,5 +1,4 @@
-# require_relative 'logging'
-require_relative '../lib/logging'
+require_relative 'logging'
 
 Dir["#{File.expand_path '../../responders', __FILE__}/**/*.rb"].sort.each { |f| require f }
 
@@ -95,7 +94,7 @@ class ResponderRegistry
         responder_class = Object.const_get(name)
         available_responders[responder_class.key] = responder_class
       rescue NameError => err
-        logger.warn("There is a mismatch in a Responder class name/module: #{err.message}")
+        Logging::logger.warn("There is a mismatch in a Responder class name/module: #{err.message}")
       end
     end
 

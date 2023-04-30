@@ -1,6 +1,6 @@
 require_relative "../lib/responder"
 
-class NeuroLibrePreviewResponder < Responder
+class NeurolibrePreviewResponder < Responder
 
   keyname :nl_preview_responder
 
