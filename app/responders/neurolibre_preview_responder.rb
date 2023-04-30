@@ -63,11 +63,11 @@ class NeuroLibrePreviewResponder < Responder
   end
 
   def default_description
-    "Open the review issue"
+    "Test preview.neurolibre.org server"
   end
 
   def default_example_invocation
-    "@#{bot_name} start review"
+    "@#{bot_name} preview test"
   end
 end
 

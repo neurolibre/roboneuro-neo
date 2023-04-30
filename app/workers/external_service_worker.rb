@@ -1,3 +1,5 @@
+require 'base64'
+
 class ExternalServiceWorker < BuffyWorker
 
   def perform(service, locals)
@@ -25,6 +27,11 @@ class ExternalServiceWorker < BuffyWorker
     end
 
     parameters = {}.merge(query_parameters, mapped_parameters)
+
+    # @NeuroLibre add conditional auth
+    if parameters[:username] && parameters[:password]
+      headers = {'Authorization' => "Basic " + Base64.strict_encode64("#{parameters[:username]}:#{parameters[:password]}")}.merge(headers)
+    end
 
     if http_method.downcase == 'get'
       response = Faraday.get(url, parameters, headers)

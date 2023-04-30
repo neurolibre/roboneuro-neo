@@ -1,4 +1,6 @@
-require_relative 'logging'
+# require_relative 'logging'
+require_relative '../lib/logging'
+
 Dir["#{File.expand_path '../../responders', __FILE__}/**/*.rb"].sort.each { |f| require f }
 
 class ResponderRegistry
