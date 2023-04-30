@@ -275,7 +275,7 @@ buffy:
         silent: true
         template_file: "review_started.md"
         close: true
-    nl_preview_server_responder:
+    neurolibre_preview_server_status:
       only: editors
       external_call:
         url: "https://preview.neurolibre.org/api/heartbeat"
@@ -286,7 +286,7 @@ buffy:
         mapping:
           id: issue_id
         silent: false
-    nl_preprint_server_responder:
+    neurolibre_preprint_server_status:
       only: editors
       external_call:
         url: "https://neurolibre-data-prod.conp.cloud/api/heartbeat"

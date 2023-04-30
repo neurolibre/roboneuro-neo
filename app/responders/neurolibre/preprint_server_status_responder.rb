@@ -1,8 +1,9 @@
 require_relative "../../lib/responder"
 
-class NeurolibrePreprintServerResponder < Responder
+module Neurolibre
+class PreprintServerStatusResponder < Responder
 
-  keyname :nl_preprint_server_responder
+  keyname :neurolibre_preprint_server_status
 
   def define_listening
     required_params :external_call
@@ -65,4 +66,4 @@ class NeurolibrePreprintServerResponder < Responder
     "@#{bot_name} preprint server status"
   end
 end
-
+end
