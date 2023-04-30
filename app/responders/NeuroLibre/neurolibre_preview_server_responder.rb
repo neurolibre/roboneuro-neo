@@ -1,14 +1,14 @@
-require_relative "../lib/responder"
+require_relative "../../lib/responder"
 
-class NeurolibrePreviewResponder < Responder
+class NeurolibrePreviewServerResponder < Responder
 
-  keyname :nl_preview_responder
+  keyname :nl_preview_server_responder
 
   def define_listening
     required_params :external_call
 
     @event_action = "issue_comment.created"
-    @event_regex = /\A@#{bot_name} preview test\.?\s*$/i
+    @event_regex = /\A@#{bot_name} preview server status\.?\s*$/i
   end
 
   def process_message(message)
@@ -58,11 +58,11 @@ class NeurolibrePreviewResponder < Responder
   end
 
   def default_description
-    "Test preview.neurolibre.org server"
+    "Check the status of the NeuroLibre preview server."
   end
 
   def default_example_invocation
-    "@#{bot_name} preview test"
+    "@#{bot_name} preview server status"
   end
 end
 
