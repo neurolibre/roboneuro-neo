@@ -18,17 +18,12 @@ class NeurolibrePreviewResponder < Responder
 
   def roles_and_issue?
     unless username?(reviewers_usernames.first.to_s)
-      respond("Can't start a review without reviewers")
+      respond("Can't perform this without reviewers")
       return false
     end
 
     unless username?(editor_username)
-      respond("Can't start a review without an editor")
-      return false
-    end
-
-    if context.issue_title.match(title_regex)
-      respond("Can't start a review when the review has already started")
+      respond("Can't perform this without an editor")
       return false
     end
 
