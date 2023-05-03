@@ -290,7 +290,7 @@ module NeurolibreUtilities
         uri = URI(url)
         target_user_repo = uri.path.delete_prefix('/').delete_suffix('/')
 
-        if custom_branch.nil? || custom_branch.empty?
+        if branch.nil? || branch.empty?
             ref = nil
         else
             ref ="heads/#{branch}"
