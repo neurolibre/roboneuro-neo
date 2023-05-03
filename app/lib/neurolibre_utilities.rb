@@ -64,7 +64,7 @@ module NeurolibreUtilities
     #     email =~URI::MailTo::EMAIL_REGEXP
     # end
 
-    def get_repo_name(in_address, for_pdf=false)
+    def get_repo_owner_and_name(in_address, for_pdf=false)
 
         if for_pdf
             uri = URI(in_address)
@@ -89,21 +89,19 @@ module NeurolibreUtilities
         return target_repo
     end
 
-    def get_target_latest_sha(repository_address, custom_branch=nil)
-        target_repo = get_repo_name(repository_address)
+    def get_target_latest_sha(target_repository_url, branch=nil)
+        
+        target_repo = get_repo_owner_and_name(target_repository_url)
 
-        Logger.new(STDOUT).warn("Target repo is: #{target_repo}")
-
-        if custom_branch.nil? || custom_branch.empty?
+        if branch.nil? || branch.empty?
             begin
                 sha = github_client.commits(target_repo).map {|c,a| [c.sha]}.first
-                Logger.new(STDOUT).warn("Commits are: #{sha}")
             rescue
                 sha = nil
             end
         else
             begin
-                sha = github_client.commit(target_repo,custom_branch)['sha']
+                sha = github_client.commit(target_repo,branch)['sha']
             rescue
                 sha = nil
             end
@@ -120,7 +118,7 @@ module NeurolibreUtilities
     def get_latest_upstream_sha(forked_repo)
         # This does not take custom_branch as it is intended to find the
         # latest commit pushed by the user from its roboneurolibre fork. 
-        target_repo = get_repo_name(forked_repo)
+        target_repo = get_repo_owner_and_name(forked_repo)
         sha = github_client.commits(target_repo).map {|c,a| [c.commit.author.name,c.sha]}.select{ |e, i| e != 'roboneuro' }.first[1]
         return sha
     end
@@ -240,7 +238,7 @@ module NeurolibreUtilities
             jblogs.push("<details><summary> <b>BinderHub build log</b> </summary><pre><code>#{binder_message}</code></pre></details>")
         end
 
-        target_repo = get_repo_name(url)
+        target_repo = get_repo_owner_and_name(url)
         uname = target_repo.split("/")[0]
         repo = target_repo.split("/")[1]
 
@@ -525,7 +523,7 @@ module NeurolibreUtilities
     # end
 
     def get_default_branch(repository_address)
-        target_repo = get_repo_name(repository_address)
+        target_repo = get_repo_owner_and_name(repository_address)
         repo_info = JSON.parse(RestClient.get("https://api.github.com/repos/#{target_repo}"))
         return repo_info['default_branch']
     end
@@ -533,7 +531,7 @@ module NeurolibreUtilities
     # def update_github_content(repository_address,content_path,new_content,commit_message,branch="main")
     #     # To configure the forked repository for production.
     #         # A repo for which roboneuro has write access (neurolibre or roboneurolibre orgs.)
-    #         target_repo = get_repo_name(repository_address)
+    #         target_repo = get_repo_owner_and_name(repository_address)
             
     #         # Get blob sha of the target file 
     #         blob = JSON.parse(RestClient.get("https://api.github.com/repos/#{target_repo}/contents/#{content_path}"))
@@ -554,7 +552,7 @@ module NeurolibreUtilities
     # end
 
     # def fork_for_production(papers_repo)
-    #     target_repo = get_repo_name(papers_repo)
+    #     target_repo = get_repo_owner_and_name(papers_repo)
     #     r = github_client.fork(target_repo, {:organization => 'roboneurolibre'})
     #     puts(r['html_url'])
     #     return r['html_url']
@@ -565,7 +563,7 @@ module NeurolibreUtilities
     #     # forked from user's account, e.g., https://github.com/roboneurolibre/my_preprint
     #     # Sets launch_buttons/binderhub_url and repository/url for neurolibre production.
     #     # Returns true/false, conditional to a successful update of the _config.yml on forked repo.
-    #     target_repo = get_repo_name(forked_address)
+    #     target_repo = get_repo_owner_and_name(forked_address)
     #     branch = get_default_branch(forked_address)
 
     #     begin
@@ -603,7 +601,7 @@ module NeurolibreUtilities
     #     # forked from user's account, e.g., https://github.com/roboneurolibre/my_preprint
     #     # The second argument is to add a hyperlink to the NeuroLibre page from the preprint.
     #     # Returns true/false, conditional to a successful update of the _config.yml on forked repo.
-    #     target_repo = get_repo_name(forked_address)
+    #     target_repo = get_repo_owner_and_name(forked_address)
     #     branch = get_default_branch(forked_address)
 
     #     begin
@@ -637,7 +635,7 @@ module NeurolibreUtilities
     # end
 
     # def update_forked_content_fail_msg(forked_address,content,job_id)
-    #     target_repo = get_repo_name(forked_address)
+    #     target_repo = get_repo_owner_and_name(forked_address)
     #     branch = get_default_branch(forked_address)
     #     "😥 I could not update `_toc.yml` at the [forked repository](#{forked_address}), interrupting the production workflow.
     #     <details><summary> Potential issues </summary><ul>
