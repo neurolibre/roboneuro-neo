@@ -231,7 +231,11 @@ module NeurolibreUtilities
         # I book can't be found, binder may have succeeded, or both failed. 
         pos_success ? status = 200 : status = 404
         pos_success ? pos = pos_success : pos = pos_fail
-        pos_success ? flag = success_flag : pos = flag = fail_flag
+        pos_success ? flag = success_flag : flag = fail_flag
+
+        Logger.new(STDOUT).warn("#{pos}")
+        Logger.new(STDOUT).warn("#{flag}")
+        Logger.new(STDOUT).warn("#{streamed}")
     
         binder_message = streamed[0...pos].join
         book_message = /#{flag}(.+)/.match(streamed[pos..-1].join)[1]
