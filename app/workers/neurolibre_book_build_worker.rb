@@ -44,14 +44,14 @@ class NeurolibreBookBuildWorker < BuffyWorker
         
         # Success
         if build_results['status'] == 200
-          book_url = response_json['book_message']['book_url']
+          book_url = build_results['book_message']['book_url']
           message = ":hibiscus: Awesome news! :hibiscus:  \n > Your build was successful and [the latest version of your reproducible preprint](#{book_url}) is ready for you to check out :confetti_ball: \n```\n#{response_json['binder_message']}\n```"
           respond(message)
         end
 
         # Fail reason 1
         if build_results['status'] == 404
-          log_message = get_book_build_log(response_json['binder_message'],url,latest_sha,false)
+          log_message = get_book_build_log(build_results['binder_message'],url,latest_sha,false)
           respond(log_message)
         end
 
@@ -61,7 +61,7 @@ class NeurolibreBookBuildWorker < BuffyWorker
           # for getting book build logs. Given that code 424 may involve a case 
           # where book-buil.log does not exist, this ensures that a custom message 
           # is displayed. 
-          log_message = get_book_build_log(response_json['binder_message'],url,latest_sha,false,build_results['book_message'])
+          log_message = get_book_build_log(build_results['binder_message'],url,latest_sha,false,build_results['book_message'])
           respond(log_message)
         end
 
