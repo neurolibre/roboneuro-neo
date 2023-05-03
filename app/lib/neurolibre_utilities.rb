@@ -94,7 +94,7 @@ module NeurolibreUtilities
 
         Logger.new(STDOUT).warn("Target repo is: #{target_repo}")
 
-        if custom_branch.nil?
+        if custom_branch.nil? || custom_branch.empty?
             begin
                 sha = github_client.commits(target_repo).map {|c,a| [c.sha]}.first
                 Logger.new(STDOUT).warn("Commits are: #{sha}")
@@ -290,10 +290,10 @@ module NeurolibreUtilities
         uri = URI(url)
         target_user_repo = uri.path.delete_prefix('/').delete_suffix('/')
 
-        if branch
-            ref ="heads/#{branch}"
-        else
+        if custom_branch.nil? || custom_branch.empty?
             ref = nil
+        else
+            ref ="heads/#{branch}"
         end
 
         # Confirm binder, content folders exist
