@@ -297,3 +297,8 @@ buffy:
         mapping:
           id: issue_id
         silent: false
+    neurolibre_build_book:
+      data_from_issue:
+      - branch
+      - target-repository
+      - issue_id
