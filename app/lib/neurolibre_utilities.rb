@@ -2,8 +2,10 @@ require 'uri'
 require 'json'
 require 'time'
 require 'yaml'
-
+require 'faraday'
+require 'logger'
 require_relative 'github'
+
 
 include GitHub
 
@@ -21,7 +23,7 @@ module NeurolibreUtilities
         @neurolibre_test_client = Faraday.new(url: $TEST_DOMAIN) do |faraday|
           faraday.request :json
           faraday.ssl.verify = $TEST_SSL
-          faraday.basic_auth(ENV['PREVIEW_API_USER'], ENV['PREVIEW_API_KEY'])
+          faraday.request :authorization, :basic, ENV['PREVIEW_API_USER'], ENV['PREVIEW_API_KEY']
         end
       end
     
@@ -29,7 +31,7 @@ module NeurolibreUtilities
         @neurolibre_prod_client = Faraday.new(url: $PROD_DOMAIN) do |faraday|
           faraday.request :json
           faraday.ssl.verify = $PROD_SSL
-          faraday.basic_auth(ENV['PREVIEW_API_USER'], ENV['PREVIEW_API_KEY'])
+          faraday.request :authorization, :basic, ENV['PREVIEW_API_USER'], ENV['PREVIEW_API_KEY']
         end
     end
 
@@ -87,18 +89,19 @@ module NeurolibreUtilities
         return target_repo
     end
 
-    def get_latest_book_build_sha(repository_address, custom_branch=nil)
+    def get_target_latest_sha(repository_address, custom_branch=nil)
         target_repo = get_repo_name(repository_address)
 
+        Logger.new(STDOUT).warn("Target repo is: #{target_repo}")
+
         if custom_branch.nil?
-            #sha = github_client.commits(target_repo).map {|c,a| [c.commit.message,c.sha]}.select{ |e, i| e[/\--build-book/] }.first
             begin
                 sha = github_client.commits(target_repo).map {|c,a| [c.sha]}.first
+                Logger.new(STDOUT).warn("Commits are: #{sha}")
             rescue
                 sha = nil
             end
         else
-            #sha = github_client.commits(target_repo,custom_branch).map {|c,a| [c.commit.message,c.sha]}.select{ |e, i| e[/\--build-book/] }.first
             begin
                 sha = github_client.commit(target_repo,custom_branch)['sha']
             rescue

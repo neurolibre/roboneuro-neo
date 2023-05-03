@@ -14,7 +14,7 @@ class NeurolibreBookBuildWorker < BuffyWorker
     def perform(locals, url, branch)
       load_context_and_env(locals)
 
-      latest_sha = get_latest_book_build_sha(url, branch)
+      latest_sha = get_target_latest_sha(url, branch)
   
       if latest_sha.nil?
         respond "Requested branch/SHA does not exist for #{url}"
