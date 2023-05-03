@@ -166,7 +166,7 @@ module NeurolibreUtilities
           end
         when 400..499
           result = nil
-          warn "Requested book does not exist on the NeuroLibre #{server_type} server."
+          warn "Requested book does not exist on the NeuroLibre #{server_type} server (yet)."
         else
           result = nil
         end
@@ -184,6 +184,7 @@ module NeurolibreUtilities
         # All the details regarding API calls are available in the Swagger documentation.
         
         streamed = []
+        response = {}
 
         # Receiving response in stream to avoid cloudflare timeout (100s).
         # BinderHub build sends keepalive every 30 seconds to avoid such 
@@ -203,7 +204,29 @@ module NeurolibreUtilities
         fail_flag = "<-- Book Failed -->\n"
         pos_success = streamed.find_index { |line| line.start_with?(success_flag)}
         pos_fail = streamed.find_index { |line| line.start_with?(fail_flag)}
-        
+
+        # If neither flag can't be found, it is likely that
+        # jupyter book dependency is missing.
+        if pos_fail.nil? && pos_success.nil?
+            # Payload is JSON, convert to hash first
+            payload_hash = JSON.parse(payload_in)
+            # Format url into owner/repository format
+            target_repo = get_repo_owner_and_name(payload_hash['repo_url'])
+            # Look for book execution attempt log
+            cur_response = neurolibre_test_client.get("/book-artifacts/#{target_repo.split("/")[0]}/github.com/#{target_repo.split("/")[1]}/#{payload_hash['commit_hash']}/book-build.log")
+            response['status'] = 424 # Stands for missing dependency
+            response['binder_message'] = streamed.join # This is array, have to join
+            if cur_response.status == 200
+                response['book_message'] = cur_response.body # This is string, no need to join
+            else
+                # If book-build.log is absent, means that user pod failed 
+                # means that binderhub build failed.
+                response['book_message'] = "Because the Binder build failed, the book build was not triggered."
+            end
+            # Cannot proceed.
+            return response
+        end
+
         # If book can be found, it means that both binder and book build were ok
         # I book can't be found, binder may have succeeded, or both failed. 
         pos_success ? status = 200 : status = 404
@@ -212,9 +235,7 @@ module NeurolibreUtilities
     
         binder_message = streamed[0...pos].join
         book_message = /#{flag}(.+)/.match(streamed[pos..-1].join)[1]
-        
-        # Into ruby hash
-        response = {}
+
         # Add status code 
         response['status'] = status
         # Add book message
@@ -225,7 +246,7 @@ module NeurolibreUtilities
         return response
     end
 
-    def get_book_build_log(binder_message,url,hash,success)
+    def get_book_build_log(binder_message,url,hash,success,book_message=nil)
         # Uses static GET to locate files. 
         # This is allowed under the `book-artifacts` directory and for its subdirectories.
         jblogs = []
@@ -242,10 +263,16 @@ module NeurolibreUtilities
         uname = target_repo.split("/")[0]
         repo = target_repo.split("/")[1]
 
-        cur_response = neurolibre_test_client.get("/book-artifacts/#{uname}/github.com/#{repo}/#{hash}/book-build.log")
+        if book_message.nil?
+            # To handle certain errors, book build may be passed as an argument
+            # If not, fetch from the server.
+            cur_response = neurolibre_test_client.get("/book-artifacts/#{uname}/github.com/#{repo}/#{hash}/book-build.log")
+            book_log = "<details><summary> <b>Jupyter Book build log</b> </summary><pre><code>#{cur_response.body}</code></pre></details>"
+        else
+            book_log = "<details><summary> <b>Jupyter Book build log</b> </summary><pre><code>#{book_message}</code></pre></details>"
+        end
 
-        # Add the main book build log
-        book_log = "<details><summary> <b>Jupyter Book build log</b> </summary><pre><code>#{cur_response.body}</code></pre></details>"
+        # Add book logs to the response
         jblogs.push(book_log)
 
         cur_response = neurolibre_test_client.get("/book-artifacts/#{uname}/github.com/#{repo}/#{hash}/_build/html/reports")

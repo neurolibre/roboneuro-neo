@@ -49,9 +49,19 @@ class NeurolibreBookBuildWorker < BuffyWorker
           respond(message)
         end
 
-        # Fail
+        # Fail reason 1
         if build_results['status'] == 404
           log_message = get_book_build_log(response_json['binder_message'],url,latest_sha,false)
+          respond(log_message)
+        end
+
+        # Fail reason 2
+        if build_results['status'] == 424
+          # When passed, the last argument to function overrides the default method 
+          # for getting book build logs. Given that code 424 may involve a case 
+          # where book-buil.log does not exist, this ensures that a custom message 
+          # is displayed. 
+          log_message = get_book_build_log(response_json['binder_message'],url,latest_sha,false,build_results['book_message'])
           respond(log_message)
         end
 
