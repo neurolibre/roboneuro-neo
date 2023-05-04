@@ -308,7 +308,7 @@ module NeurolibreUtilities
             Logger.new(STDOUT).warn("No execution reports, all or none succeeded.")
         when 200
             # If reports directory exists, so should some logs there.
-            txt = response.body
+            txt = cur_response.body
             rgx = /href=['"]\K[^'"]+.log/
             logs = txt.scan(rgx)
             logs.each do |log_file|
