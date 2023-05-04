@@ -4,6 +4,7 @@ require 'time'
 require 'yaml'
 require 'faraday'
 require 'logger'
+require 'openai'
 require_relative 'github'
 
 
@@ -19,6 +20,15 @@ $PROD_SSL = true
 
 module NeurolibreUtilities
 
+    def openai_client
+        OpenAI.configure do |config|
+            config.access_token = ENV['OAI_ACCESS_TOKEN']
+            config.organization_id = ENV['OAI_ORG_ID']
+            config.request_timeout = 120
+        end
+        @openai_client = OpenAI::Client.new
+    end
+
     def neurolibre_test_client
         @neurolibre_test_client = Faraday.new(url: $TEST_DOMAIN) do |faraday|
           faraday.request :json
@@ -33,6 +43,18 @@ module NeurolibreUtilities
           faraday.ssl.verify = $PROD_SSL
           faraday.request :authorization, :basic, ENV['PREVIEW_API_USER'], ENV['PREVIEW_API_KEY']
         end
+    end
+
+    def get_funny_quote(repo_url)
+        branch = get_default_branch(repo_url)
+        target_repo = get_repo_owner_and_name(repo_url)
+        response = openai_client.chat(
+            parameters: {
+                model: "gpt-3.5-turbo", # Required.
+                messages: [{ role: "user", content: "Write an amusing quote based on the content of https://raw.githubusercontent.com/#{target_repo.split("/")[0]}/#{target_repo.split("/")[1]}/#{branch}/paper.md"}], # Required.
+                temperature: 0.7,
+            })
+        return response.dig("choices", 0, "message", "content")
     end
 
     class << self
@@ -281,10 +303,9 @@ module NeurolibreUtilities
 
         cur_response = neurolibre_test_client.get("/book-artifacts/#{uname}/github.com/#{repo}/#{hash}/_build/html/reports")
 
-        case cur_response.code
+        case cur_response.status
         when 404
-            # Code should not hit here if book build was successful.
-            puts "No execution reports, all succeeded."
+            Logger.new(STDOUT).warn("No execution reports, all or none succeeded.")
         when 200
             # If reports directory exists, so should some logs there.
             txt = response.body
@@ -555,7 +576,8 @@ module NeurolibreUtilities
 
     def get_default_branch(repository_address)
         target_repo = get_repo_owner_and_name(repository_address)
-        repo_info = JSON.parse(RestClient.get("https://api.github.com/repos/#{target_repo}"))
+        response = Faraday.get("https://api.github.com/repos/#{target_repo}")
+        repo_info = JSON.parse(response.body)
         return repo_info['default_branch']
     end
 
