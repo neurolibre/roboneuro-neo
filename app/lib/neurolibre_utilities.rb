@@ -51,7 +51,7 @@ module NeurolibreUtilities
         response = openai_client.chat(
             parameters: {
                 model: "gpt-3.5-turbo", # Required.
-                messages: [{ role: "user", content: "Write an amusing quote based on the content of https://raw.githubusercontent.com/#{target_repo.split("/")[0]}/#{target_repo.split("/")[1]}/#{branch}/paper.md"}], # Required.
+                messages: [{ role: "user", content: "Write an amusing and flattering quote based on the content of https://raw.githubusercontent.com/#{target_repo.split("/")[0]}/#{target_repo.split("/")[1]}/#{branch}/paper.md"}], # Required.
                 temperature: 0.7,
             })
         return response.dig("choices", 0, "message", "content")
