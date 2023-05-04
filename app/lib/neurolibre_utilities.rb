@@ -313,7 +313,7 @@ module NeurolibreUtilities
             logs = txt.scan(rgx)
             logs.each do |log_file|
                 log = neurolibre_test_client.get("/book-artifacts/#{uname}/github.com/#{repo}/#{hash}/_build/html/reports/#{log_file}")
-                cur_log= "<details><summary> <b>Execution error log</b> for <code>#{log_file.gsub('.log','')}</code> notebook (#{log_file.gsub('.log','')}.ipynb) or MyST (#{log_file.gsub('.log','')}.md)).</summary><pre><code>#{log.body}</code></pre></details>"
+                cur_log= "<details><summary> <b>Execution error log</b> for <code>#{log_file.gsub(/\..*/, "")}</code> notebook (#{log_file.gsub(/\..*/, "")}.ipynb) or MyST (#{log_file.gsub(/\..*/, "")}.md)).</summary><pre><code>#{log.body}</code></pre></details>"
                 jblogs.push(cur_log)
             end
         end
