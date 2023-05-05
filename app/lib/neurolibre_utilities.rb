@@ -201,7 +201,7 @@ module NeurolibreUtilities
     def request_book_build(payload_in)
         # [Book]->[POST /api/book/build]
         # Preview server exclusive.
-        # See the swagger API docs at https://preview.neurolibre.org/documentation#/Book/post_api_book_build
+        # See the swagger API docs at https://preview.neurolibre.org/documentation#/Book/api_book_build
         # This function sends the request to the API endpoint documented in the above line.
         # All the details regarding API calls are available in the Swagger documentation.
         
@@ -214,7 +214,7 @@ module NeurolibreUtilities
         neurolibre_test_client.headers["Accept"] = "text/event-stream"
         neurolibre_test_client.options[:timeout] = 3600
     
-        neurolibre_test_client.post('/api/forward', payload_in) do |req|
+        neurolibre_test_client.post('/api/book/build', payload_in) do |req|
             req.options.on_data = Proc.new do |chunk, overall_received_bytes, env|
                 streamed << chunk
             end
@@ -222,8 +222,8 @@ module NeurolibreUtilities
         
         # Depending wheter a book is found or not, binderhub messages
         # are appended by a book build status flag on the full-stack-server end.
-        success_flag = "<-- Book Success -->\n"
-        fail_flag = "<-- Book Failed -->\n"
+        success_flag = "<-- Book Build Successful -->\n"
+        fail_flag = "<-- Book Build Failed -->\n"
         pos_success = streamed.find_index { |line| line.start_with?(success_flag)}
         pos_fail = streamed.find_index { |line| line.start_with?(fail_flag)}
 
