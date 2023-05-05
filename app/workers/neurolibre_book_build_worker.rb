@@ -47,7 +47,7 @@ class NeurolibreBookBuildWorker < BuffyWorker
         # Success
         if build_results['status'] == 200
           book_url = build_results['book_message']['book_url']
-          message = ":hibiscus: Awesome news! :hibiscus:  \n > Your build was successful and [the latest version of your reproducible preprint](#{book_url}) is ready for you to check out :confetti_ball: \n```\n#{response_json['binder_message']}\n```"
+          message = ":hibiscus: Awesome news! :hibiscus:  \n > Your build was successful and [the latest version of your reproducible preprint](#{book_url}) is ready for you to check out :confetti_ball: \n```\n#{build_results['binder_message']}\n```"
           respond(message)
         end
 
