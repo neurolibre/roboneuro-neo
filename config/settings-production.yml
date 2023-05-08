@@ -310,6 +310,9 @@ buffy:
           headers:
             username: <%= ENV['PREVIEW_API_USER'] %>
             password: <%= ENV['PREVIEW_API_KEY'] %>
+          data_from_issue:
+            - target-repository
+            - issue_id
           mapping:
             id: issue_id
             repository_url: target-repository
