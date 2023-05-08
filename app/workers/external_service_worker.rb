@@ -1,12 +1,12 @@
 require 'base64'
-# require_relative '../lib/logging'
+require_relative '../lib/logging'
 
 class ExternalServiceWorker < BuffyWorker
    # include Logging
 
   def perform(service, locals)
     load_context_and_env(locals)
-
+    
     http_method = service['method'] || 'post'
     url = service['url']
     headers = service['headers'] || {}
@@ -40,6 +40,7 @@ class ExternalServiceWorker < BuffyWorker
     if http_method.downcase == 'get'
       response = Faraday.get(url, parameters, headers)
     else
+      Logger.new(STDOUT).warn(parameters.to_json)
       post_headers = {'Content-Type' => 'application/json', 'Accept' => 'application/json'}.merge(headers)
       response = Faraday.post(url, parameters.to_json, post_headers)
     end
