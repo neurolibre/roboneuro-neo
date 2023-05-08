@@ -55,7 +55,7 @@ class PreprintSyncDataResponder< Responder
   end
 
   def default_example_invocation
-    "@#{bot_name}  production sync data"
+    "@#{bot_name} production sync data"
   end
 end
 end

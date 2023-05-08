@@ -311,6 +311,6 @@ buffy:
             username: <%= ENV['PREVIEW_API_USER'] %>
             password: <%= ENV['PREVIEW_API_KEY'] %>
           mapping:
-            issue_id: issue_id
-            target_repository: target-repository
+            id: issue_id
+            repository_url: target-repository
           silent: true
