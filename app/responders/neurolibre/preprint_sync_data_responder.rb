@@ -6,14 +6,14 @@ class PreprintSyncDataResponder< Responder
   keyname :neurolibre_preprint_sync_data
 
   def define_listening
-    required_params :data_from_issue, :external_call
+    required_params :external_call
     @event_action = "issue_comment.created"
     @event_regex = /\A@#{bot_name} production sync data\.?\s*$/i
   end
 
   def process_message(message)
     return unless roles_and_issue?
-    process_external_service(params[:data_from_issue], locals)
+    process_external_service(params[:external_call], locals)
   end
 
   def roles_and_issue?
