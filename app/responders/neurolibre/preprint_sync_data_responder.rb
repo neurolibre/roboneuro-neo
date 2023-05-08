@@ -1,7 +1,7 @@
 require_relative "../../lib/responder"
 
 module Neurolibre
-class PreprintSycDataResponder< Responder
+class PreprintSyncDataResponder< Responder
 
   keyname :neurolibre_preprint_sync_data
 
