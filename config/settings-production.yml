@@ -302,3 +302,15 @@ buffy:
       - branch
       - target-repository
       - issue_id
+    neurolibre_preprint_sync_data:
+      only: editors
+      external_call:
+          url: "https://neurolibre-data-prod.conp.cloud/api/data/sync"
+          method: "post"
+          headers:
+            username: <%= ENV['PREVIEW_API_USER'] %>
+            password: <%= ENV['PREVIEW_API_KEY'] %>
+          mapping:
+            issue_id: issue_id
+            target_repository: target-repository
+          silent: true
