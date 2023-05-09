@@ -42,7 +42,13 @@ class ExternalServiceWorker < BuffyWorker
     else
       Logger.new(STDOUT).warn(parameters.to_json)
       post_headers = {'Content-Type' => 'application/json', 'Accept' => 'application/json'}.merge(headers)
-      response = Faraday.post(url, parameters.to_json, post_headers)
+      if headers['Authorization']
+        # @NeuroLibre marshmallow validation requires this for now, 
+        # to be dealt with later in detail.
+        response = Faraday.post(url, parameters, post_headers)
+      else
+        response = Faraday.post(url, parameters.to_json, post_headers)
+      end
     end
 
     if response.status.between?(200, 299)

@@ -314,5 +314,6 @@ buffy:
           - target-repository
           - issue_id
         mapping:
+          id: issue_id
           repository_url: target-repository
         silent: true
