@@ -305,13 +305,14 @@ buffy:
     neurolibre_preprint_sync_data:
       only: editors
       external_call:
-          url: "https://neurolibre-data-prod.conp.cloud/api/data/sync"
-          method: "post"
-          headers:
-            username: <%= ENV['PREVIEW_API_USER'] %>
-            password: <%= ENV['PREVIEW_API_KEY'] %>
-          silent: true
-      data_from_issue:
-      - target-repository
-      - issue_id
-          
+        url: "https://neurolibre-data-prod.conp.cloud/api/data/sync"
+        method: "post"
+        headers:
+          username: <%= ENV['PREVIEW_API_USER'] %>
+          password: <%= ENV['PREVIEW_API_KEY'] %>
+        data_from_issue:
+          - target-repository
+          - issue_id
+        mapping:
+          repository_url: target-repository
+        silent: true
