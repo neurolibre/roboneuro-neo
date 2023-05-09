@@ -40,13 +40,14 @@ class ExternalServiceWorker < BuffyWorker
     if http_method.downcase == 'get'
       response = Faraday.get(url, parameters, headers)
     else
-      Logger.new(STDOUT).warn(parameters.to_json)
+      
       post_headers = {'Content-Type' => 'application/json', 'Accept' => 'application/json'}.merge(headers)
       # @Neurolibre, this is a required temporary solution for 
       # python compatibility.
       if headers['Authorization']
         parameters.delete('target-repository')
       end
+      Logger.new(STDOUT).warn(parameters.to_json)
       response = Faraday.post(url, parameters.to_json, post_headers)
     end
 
