@@ -13,7 +13,7 @@ class PreprintSyncDataResponder< Responder
 
   def process_message(message)
     return unless roles_and_issue?
-    NeurolibreBookBuildWorker.perform_async(serializable(locals), target_repo_value, branch_name_value)
+    #NeurolibreBookBuildWorker.perform_async(serializable(locals), target_repo_value, branch_name_value)
     process_external_service(params[:external_call], locals)
   end
 
