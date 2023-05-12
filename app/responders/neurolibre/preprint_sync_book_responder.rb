@@ -1,14 +1,14 @@
 require_relative "../../lib/responder"
 
 module Neurolibre
-class PreprintSyncDataResponder< Responder
+class PreprintSyncBookResponder< Responder
 
-  keyname :neurolibre_preprint_sync_data
+  keyname :neurolibre_preprint_sync_book
 
   def define_listening
     required_params :external_call
     @event_action = "issue_comment.created"
-    @event_regex = /\A@#{bot_name} production sync data\.?\s*$/i
+    @event_regex = /\A@#{bot_name} production sync book\.?\s*$/i
   end
 
   def process_message(message)
@@ -52,11 +52,11 @@ class PreprintSyncDataResponder< Responder
   end
 
   def default_description
-    "Transfer data from preview to the preprint (production) server."
+    "Transfer the final preprint (forked repo) to the preprint (production) server (DOI URL)."
   end
 
   def default_example_invocation
-    "@#{bot_name} production sync data"
+    "@#{bot_name} production sync book"
   end
 end
 end
