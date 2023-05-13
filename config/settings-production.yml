@@ -129,7 +129,7 @@ buffy:
     github_action:
       - draft_paper:
           command: generate pdf
-          workflow_repo: neurolibre/neurolibre-preprints
+          workflow_repo: neurolibre/preprints
           workflow_name: draft-paper.yml
           workflow_ref: master
           description: Generates the pdf paper
@@ -146,7 +146,7 @@ buffy:
             reject_msg: "Paper is not ready for acceptance yet, the archive is missing"
           only: editors
           command: recommend-accept
-          workflow_repo: neurolibre/neurolibre-preprints
+          workflow_repo: neurolibre/preprints
           workflow_name: recommend-acceptance.yml
           workflow_ref: master
           description: Recommends the submission for acceptance
@@ -168,7 +168,7 @@ buffy:
             reject_msg: "Paper is not ready for acceptance yet, the archive is missing"
           only: eics
           command: accept
-          workflow_repo: neurolibre/neurolibre-preprints
+          workflow_repo: neurolibre/preprints
           workflow_name: accept.yml
           workflow_ref: master
           description: Accept and publish the paper
@@ -188,7 +188,7 @@ buffy:
             reject_msg: "Can't rebuild paper, there's no value for archive"
           only: eics
           command: reaccept
-          workflow_repo: neurolibre/neurolibre-preprints
+          workflow_repo: neurolibre/preprints
           workflow_name: reaccept.yml
           workflow_ref: master
           description: Update data on an accepted/published paper
@@ -201,7 +201,7 @@ buffy:
             repository_url: target-repository
       - preprint:
           command: generate preprint
-          workflow_repo: neurolibre/neurolibre-preprints
+          workflow_repo: neurolibre/preprints
           workflow_name: preprint.yml
           workflow_ref: master
           description: Generates a LaTeX preprint file
