@@ -3,7 +3,7 @@ require 'uri'
 require 'faraday'
 
 
-module Openjournals
+module Neurolibre
   class SetDataArchiveResponder < Responder
     keyname :neurolibre_set_data_archive
 
