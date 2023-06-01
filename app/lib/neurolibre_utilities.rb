@@ -197,80 +197,86 @@ module NeurolibreUtilities
         return result
     end
 
-
     def request_book_build(payload_in)
-        # [Book]->[POST /api/book/build]
-        # Preview server exclusive.
-        # See the swagger API docs at https://preview.neurolibre.org/documentation#/Book/api_book_build
-        # This function sends the request to the API endpoint documented in the above line.
-        # All the details regarding API calls are available in the Swagger documentation.
         
-        streamed = []
-        response = {}
-
-        # Receiving response in stream to avoid cloudflare timeout (100s).
-        # BinderHub build sends keepalive every 30 seconds to avoid such 
-        # proxy timeouts as well.
-        neurolibre_test_client.headers["Accept"] = "text/event-stream"
-        neurolibre_test_client.options[:timeout] = 3600
+        response = neurolibre_test_client.post('/api/book/build', payload_in)
+        Logger.new(STDOUT).warn(response)
     
-        neurolibre_test_client.post('/api/book/build', payload_in) do |req|
-            req.options.on_data = Proc.new do |chunk, overall_received_bytes, env|
-                streamed << chunk
-            end
-        end
-        
-        # Depending wheter a book is found or not, binderhub messages
-        # are appended by a book build status flag on the full-stack-server end.
-        success_flag = "<-- Book Build Successful -->\n"
-        fail_flag = "<-- Book Build Failed -->\n"
-        pos_success = streamed.find_index { |line| line.start_with?(success_flag)}
-        pos_fail = streamed.find_index { |line| line.start_with?(fail_flag)}
-
-        # If neither flag can't be found, it is likely that
-        # jupyter book dependency is missing.
-        if pos_fail.nil? && pos_success.nil?
-            # Payload is JSON, convert to hash first
-            payload_hash = JSON.parse(payload_in)
-            # Format url into owner/repository format
-            target_repo = get_repo_owner_and_name(payload_hash['repo_url'])
-            # Look for book execution attempt log
-            cur_response = neurolibre_test_client.get("/book-artifacts/#{target_repo.split("/")[0]}/github.com/#{target_repo.split("/")[1]}/#{payload_hash['commit_hash']}/book-build.log")
-            response['status'] = 424 # Stands for missing dependency
-            response['binder_message'] = streamed.join # This is array, have to join
-            if cur_response.status == 200
-                response['book_message'] = cur_response.body # This is string, no need to join
-            else
-                # If book-build.log is absent, means that user pod failed 
-                # means that binderhub build failed.
-                response['book_message'] = "Because the Binder build failed, the book build was not triggered."
-            end
-            # Cannot proceed.
-            return response
-        end
-
-        # If book can be found, it means that both binder and book build were ok
-        # I book can't be found, binder may have succeeded, or both failed. 
-        pos_success ? status = 200 : status = 404
-        pos_success ? pos = pos_success : pos = pos_fail
-        pos_success ? flag = success_flag : flag = fail_flag
-
-        #Logger.new(STDOUT).warn("#{pos}")
-        Logger.new(STDOUT).warn("#{flag}")
-        #Logger.new(STDOUT).warn("#{streamed}")
-    
-        binder_message = streamed[0...pos].join
-        book_message = /#{flag}(.+)/.match(streamed[pos..-1].join)[1]
-
-        # Add status code 
-        response['status'] = status
-        # Add book message
-        response['book_message'] = JSON.parse(book_message)
-        # Add binder logs
-        response['binder_message'] = binder_message
-
-        return response
     end
+
+    # def request_book_build(payload_in)
+    #     # [Book]->[POST /api/book/build]
+    #     # Preview server exclusive.
+    #     # See the swagger API docs at https://preview.neurolibre.org/documentation#/Book/api_book_build
+    #     # This function sends the request to the API endpoint documented in the above line.
+    #     # All the details regarding API calls are available in the Swagger documentation.
+        
+    #     streamed = []
+    #     response = {}
+
+    #     # Receiving response in stream to avoid cloudflare timeout (100s).
+    #     # BinderHub build sends keepalive every 30 seconds to avoid such 
+    #     # proxy timeouts as well.
+    #     neurolibre_test_client.headers["Accept"] = "text/event-stream"
+    #     neurolibre_test_client.options[:timeout] = 3600
+    
+    #     neurolibre_test_client.post('/api/book/build', payload_in) do |req|
+    #         req.options.on_data = Proc.new do |chunk, overall_received_bytes, env|
+    #             streamed << chunk
+    #         end
+    #     end
+        
+    #     # Depending wheter a book is found or not, binderhub messages
+    #     # are appended by a book build status flag on the full-stack-server end.
+    #     success_flag = "<-- Book Build Successful -->\n"
+    #     fail_flag = "<-- Book Build Failed -->\n"
+    #     pos_success = streamed.find_index { |line| line.start_with?(success_flag)}
+    #     pos_fail = streamed.find_index { |line| line.start_with?(fail_flag)}
+
+    #     # If neither flag can't be found, it is likely that
+    #     # jupyter book dependency is missing.
+    #     if pos_fail.nil? && pos_success.nil?
+    #         # Payload is JSON, convert to hash first
+    #         payload_hash = JSON.parse(payload_in)
+    #         # Format url into owner/repository format
+    #         target_repo = get_repo_owner_and_name(payload_hash['repo_url'])
+    #         # Look for book execution attempt log
+    #         cur_response = neurolibre_test_client.get("/book-artifacts/#{target_repo.split("/")[0]}/github.com/#{target_repo.split("/")[1]}/#{payload_hash['commit_hash']}/book-build.log")
+    #         response['status'] = 424 # Stands for missing dependency
+    #         response['binder_message'] = streamed.join # This is array, have to join
+    #         if cur_response.status == 200
+    #             response['book_message'] = cur_response.body # This is string, no need to join
+    #         else
+    #             # If book-build.log is absent, means that user pod failed 
+    #             # means that binderhub build failed.
+    #             response['book_message'] = "Because the Binder build failed, the book build was not triggered."
+    #         end
+    #         # Cannot proceed.
+    #         return response
+    #     end
+
+    #     # If book can be found, it means that both binder and book build were ok
+    #     # I book can't be found, binder may have succeeded, or both failed. 
+    #     pos_success ? status = 200 : status = 404
+    #     pos_success ? pos = pos_success : pos = pos_fail
+    #     pos_success ? flag = success_flag : flag = fail_flag
+
+    #     #Logger.new(STDOUT).warn("#{pos}")
+    #     Logger.new(STDOUT).warn("#{flag}")
+    #     #Logger.new(STDOUT).warn("#{streamed}")
+    
+    #     binder_message = streamed[0...pos].join
+    #     book_message = /#{flag}(.+)/.match(streamed[pos..-1].join)[1]
+
+    #     # Add status code 
+    #     response['status'] = status
+    #     # Add book message
+    #     response['book_message'] = JSON.parse(book_message)
+    #     # Add binder logs
+    #     response['binder_message'] = binder_message
+
+    #     return response
+    # end
 
     def get_book_build_log(binder_message,url,hash,success,book_message=nil)
         # Uses static GET to locate files. 

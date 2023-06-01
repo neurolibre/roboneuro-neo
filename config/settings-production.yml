@@ -302,6 +302,11 @@ buffy:
       - branch
       - target-repository
       - issue_id
+    neurolibre_build_forked_book:
+      data_from_issue:
+      - branch
+      - target-repository
+      - issue_id
     neurolibre_preprint_sync_data:
       only: editors
       external_call:

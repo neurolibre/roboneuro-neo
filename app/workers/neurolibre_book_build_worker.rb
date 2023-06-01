@@ -11,8 +11,13 @@ class NeurolibreBookBuildWorker < BuffyWorker
     include GitHub
     include NeurolibreUtilities
   
-    def perform(locals, url, branch)
+    def perform(locals, url, branch, issue_id, production)
       load_context_and_env(locals)
+
+      if production
+        # Perform the task for the fork (roboneurolibre)
+        url = url.sub(%r{github.com/[^/]+/}, "github.com/roboneurolibre/")
+      end
 
       latest_sha = get_target_latest_sha(url, branch)
   
@@ -20,6 +25,7 @@ class NeurolibreBookBuildWorker < BuffyWorker
         respond "Requested branch/SHA does not exist for #{url}"
       else
         post_params = {
+          :id => issue_id,
           :repo_url => url,
           :commit_hash => latest_sha
         }.to_json
@@ -37,35 +43,37 @@ class NeurolibreBookBuildWorker < BuffyWorker
 
       if book_exists_result == nil
 
-        gpt_quote = get_funny_quote(url)
+        #gpt_quote = get_funny_quote(url)
         # Respond in issue with update that book is building
-        respond " :seedling: I've started building your NeuroLibre reproducible preprint! :seedling: \n\n My close :robot: friend GPT read your `paper.md` and noted: \n> #{gpt_quote} "
+        #respond " :seedling: I've started building your NeuroLibre reproducible preprint! :seedling: \n\n My close :robot: friend GPT read your `paper.md` and noted: \n> #{gpt_quote} "
 
         # Send book build request
-        build_results = request_book_build(post_params)
+        # build_results = request_book_build(post_params)
         
-        # Success
-        if build_results['status'] == 200
-          book_url = build_results['book_message']['book_url']
-          message = ":hibiscus: Awesome news! :hibiscus:  \n > Your build was successful and [the latest version of your reproducible preprint](#{book_url}) is ready for you to check out :confetti_ball: \n```\n#{build_results['binder_message']}\n```"
-          respond(message)
-        end
+        request_book_build(post_params)
 
-        # Fail reason 1
-        if build_results['status'] == 404
-          log_message = get_book_build_log(build_results['binder_message'],url,latest_sha,false)
-          respond(log_message)
-        end
+        # # Success
+        # if build_results['status'] == 200
+        #   book_url = build_results['book_message']['book_url']
+        #   message = ":hibiscus: Awesome news! :hibiscus:  \n > Your build was successful and [the latest version of your reproducible preprint](#{book_url}) is ready for you to check out :confetti_ball: \n```\n#{build_results['binder_message']}\n```"
+        #   respond(message)
+        # end
 
-        # Fail reason 2
-        if build_results['status'] == 424
-          # When passed, the last argument to function overrides the default method 
-          # for getting book build logs. Given that code 424 may involve a case 
-          # where book-buil.log does not exist, this ensures that a custom message 
-          # is displayed. 
-          log_message = get_book_build_log(build_results['binder_message'],url,latest_sha,false,build_results['book_message'])
-          respond(log_message)
-        end
+        # # Fail reason 1
+        # if build_results['status'] == 404
+        #   log_message = get_book_build_log(build_results['binder_message'],url,latest_sha,false)
+        #   respond(log_message)
+        # end
+
+        # # Fail reason 2
+        # if build_results['status'] == 424
+        #   # When passed, the last argument to function overrides the default method 
+        #   # for getting book build logs. Given that code 424 may involve a case 
+        #   # where book-buil.log does not exist, this ensures that a custom message 
+        #   # is displayed. 
+        #   log_message = get_book_build_log(build_results['binder_message'],url,latest_sha,false,build_results['book_message'])
+        #   respond(log_message)
+        # end
 
       else
 
