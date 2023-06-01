@@ -351,3 +351,17 @@ buffy:
           id: issue_id
           repository_url: target-repository
         silent: true
+    neurolibre_zenodo_create_buckets:
+      only: editors
+      external_call:
+        url: "https://neurolibre-data-prod.conp.cloud/api/zenodo/buckets"
+        method: "post"
+        headers:
+          username: <%= ENV['PREVIEW_API_USER'] %>
+          password: <%= ENV['PREVIEW_API_KEY'] %>
+        data_from_issue:
+          - target-repository
+        mapping:
+          id: issue_id
+          repository_url: target-repository
+        silent: true
