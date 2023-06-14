@@ -291,7 +291,7 @@ buffy:
     neurolibre_preprint_server_status:
       only: editors
       external_call:
-        url: "https://neurolibre-data-prod.conp.cloud/api/heartbeat"
+        url: "https://preprint.neurolibre.org/api/heartbeat"
         method: "get"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
@@ -312,7 +312,7 @@ buffy:
     neurolibre_preprint_sync_data:
       only: editors
       external_call:
-        url: "https://neurolibre-data-prod.conp.cloud/api/data/sync"
+        url: "https://preprint.neurolibre.org/api/data/sync"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
@@ -326,7 +326,7 @@ buffy:
     neurolibre_preprint_sync_book:
       only: editors
       external_call:
-        url: "https://neurolibre-data-prod.conp.cloud/api/book/sync"
+        url: "https://preprint.neurolibre.org/api/book/sync"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
@@ -340,7 +340,7 @@ buffy:
     neurolibre_production_start:
       only: editors
       external_call:
-        url: "https://neurolibre-data-prod.conp.cloud/api/production/start"
+        url: "https://preprint.neurolibre.org/api/production/start"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
@@ -354,7 +354,7 @@ buffy:
     neurolibre_zenodo_create_buckets:
       only: editors
       external_call:
-        url: "https://neurolibre-data-prod.conp.cloud/api/zenodo/buckets"
+        url: "https://preprint.neurolibre.org/api/zenodo/buckets"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
@@ -368,7 +368,7 @@ buffy:
     neurolibre_zenodo_status:
       only: editors
       external_call:
-        url: "https://neurolibre-data-prod.conp.cloud/api/zenodo/status"
+        url: "https://preprint.neurolibre.org/api/zenodo/status"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
@@ -379,7 +379,7 @@ buffy:
     neurolibre_zenodo_upload_book:
       only: editors
       external_call:
-        url: "https://neurolibre-data-prod.conp.cloud/api/zenodo/upload/book"
+        url: "https://preprint.neurolibre.org/api/zenodo/upload/book"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
@@ -393,7 +393,21 @@ buffy:
     neurolibre_zenodo_upload_repository:
       only: editors
       external_call:
-        url: "https://neurolibre-data-prod.conp.cloud/api/zenodo/upload/repository"
+        url: "https://preprint.neurolibre.org/api/zenodo/upload/repository"
+        method: "post"
+        headers:
+          username: <%= ENV['PREVIEW_API_USER'] %>
+          password: <%= ENV['PREVIEW_API_KEY'] %>
+        data_from_issue:
+          - target-repository
+        mapping:
+          id: issue_id
+          repository_url: target-repository
+        silent: true
+    neurolibre_zenodo_upload_docker:
+      only: editors
+      external_call:
+        url: "https://preprint.neurolibre.org/api/zenodo/upload/docker"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>

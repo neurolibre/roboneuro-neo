@@ -15,7 +15,7 @@ include GitHub
 $TEST_DOMAIN="https://preview.neurolibre.org"
 $TEST_SSL = true
 
-$PROD_DOMAIN="https://neurolibre-data-prod.conp.cloud"
+$PROD_DOMAIN="https://preprint.neurolibre.org"
 $PROD_SSL = true
 
 module NeurolibreUtilities
@@ -707,7 +707,7 @@ module NeurolibreUtilities
     # def request_book_sync(payload_in)
     #     # [Book]->[POST /api/book/sync]
     #     # Preprint server exclusive
-    #     # See the swagger API docs at https://neurolibre-data-prod.conp.cloud/documentation#/Book/post_api_book_sync
+    #     # See the swagger API docs at https://preprint.neurolibre.org/documentation#/Book/post_api_book_sync
     #     # This function sends the request to the API endpoint documented in the above line.
     #     # All the details regarding API calls are available in the Swagger documentation.
 
@@ -745,7 +745,7 @@ module NeurolibreUtilities
     # def request_data_sync(payload_in)
     #     # [Data]->[POST /api/data/sync]
     #     # Preprint server exclusive
-    #     # See the swagger API docs at https://neurolibre-data-prod.conp.cloud/documentation#/Data/post_api_data_sync
+    #     # See the swagger API docs at https://preprint.neurolibre.org/documentation#/Data/post_api_data_sync
     #     # This function sends the request to the API endpoint documented in the above line.
     #     # All the details regarding API calls are available in the Swagger documentation.
 
@@ -779,7 +779,7 @@ module NeurolibreUtilities
     # def request_production_binderhub(payload_in)
     #     # [Binder]->[POST /api/binder/build]
     #     # Preprint server exclusive
-    #     # See the swagger API docs at https://neurolibre-data-prod.conp.cloud/documentation
+    #     # See the swagger API docs at https://preprint.neurolibre.org/documentation
     #     # This function sends the request to the API endpoint documented in the above line.
     #     # All the details regarding API calls are available in the Swagger documentation.
 
@@ -814,7 +814,7 @@ module NeurolibreUtilities
     # def zenodo_create_buckets(payload_in)
     #     # [Zenodo]->[POST /api/zenodo/buckets]
     #     # Preprint server exclusive
-    #     # See the swagger API docs at https://neurolibre-data-prod.conp.cloud/documentation#/Zenodo/post_api_zenodo_buckets
+    #     # See the swagger API docs at https://preprint.neurolibre.org/documentation#/Zenodo/post_api_zenodo_buckets
     #     # This function sends the request to the API endpoint documented in the above line.
     #     # All the details regarding API calls are available in the Swagger documentation.
 
@@ -872,7 +872,7 @@ module NeurolibreUtilities
     # def zenodo_get_status(issue_id)
     #     # [Zenodo]->[POST /api/zenodo/list]
     #     # Preprint server exclusive
-    #     # See the swagger API docs at https://neurolibre-data-prod.conp.cloud/documentation#/Zenodo/post_api_zenodo_list
+    #     # See the swagger API docs at https://preprint.neurolibre.org/documentation#/Zenodo/post_api_zenodo_list
     #     # This function sends the request to the API endpoint documented in the above line.
     #     # All the details regarding API calls are available in the Swagger documentation.
 
@@ -955,7 +955,7 @@ module NeurolibreUtilities
     # def zenodo_archive_items(payload_in,items,item_args)
     #     # [Zenodo]->[POST /api/zenodo/upload]
     #     # Preprint server exclusive
-    #     # See the swagger API docs at https://neurolibre-data-prod.conp.cloud/documentation#/Zenodo/post_api_zenodo_upload
+    #     # See the swagger API docs at https://preprint.neurolibre.org/documentation#/Zenodo/post_api_zenodo_upload
     #     # This function sends the request to the API endpoint documented in the above line.
     #     # All the details regarding API calls are available in the Swagger documentation.
 
@@ -988,7 +988,7 @@ module NeurolibreUtilities
     # def zenodo_publish(issue_id)
     #     # [Zenodo]->[POST /api/zenodo/publish]
     #     # Preprint server exclusive
-    #     # See the swagger API docs at https://neurolibre-data-prod.conp.cloud/documentation#/Zenodo/post_api_zenodo_publish
+    #     # See the swagger API docs at https://preprint.neurolibre.org/documentation#/Zenodo/post_api_zenodo_publish
     #     # This function sends the request to the API endpoint documented in the above line.
     #     # All the details regarding API calls are available in the Swagger documentation.
         
@@ -1034,7 +1034,7 @@ module NeurolibreUtilities
     # def zenodo_flush_items(items,issue_id)
     #     # [Zenodo]->[POST /api/zenodo/flush]
     #     # Preprint server exclusive
-    #     # See the swagger API docs at https://neurolibre-data-prod.conp.cloud/documentation#/Zenodo/post_api_zenodo_flush
+    #     # See the swagger API docs at https://preprint.neurolibre.org/documentation#/Zenodo/post_api_zenodo_flush
     #     # This function sends the request to the API endpoint documented in the above line.
     #     # All the details regarding API calls are available in the Swagger documentation.
 
