@@ -9,18 +9,20 @@ module Neurolibre
 
     def define_listening
       @event_action = "issue_comment.created"
-      @event_regex = /\A@#{bot_name} set (.*) as data archive\.?\s*$/i
+      @event_regex = /\A@#{bot_name} set (.*) as (.*) archive\.?\s*$/i
     end
 
     def process_message(message)
       new_value = @match_data[1]
       new_value = new_value.gsub("https://doi.org/", "")
 
-      ok_reply = "Done! Data archive is now [#{new_value}](https://doi.org/#{new_value})"
-      nok_reply = "Error: `archive` not found in the issue's body"
+      new_type = @match_data[2]
+
+      ok_reply = "Done, #{new_type} archive is now [#{new_value}](https://doi.org/#{new_value})"
+      nok_reply = "Error: `#{new_type}` not found in the issue's body"
 
       if valid_doi_value?(new_value)
-        reply = update_value("data-archive", new_value) ? ok_reply : nok_reply
+        reply = update_value("#{new_type}-archive", new_value) ? ok_reply : nok_reply
       else
         reply = "That doesn't look like a valid DOI value"
       end
@@ -38,7 +40,7 @@ module Neurolibre
     end
 
     def default_description
-      "Set a value for the data archive DOI"
+      "Set a value for the (data/book/repository/docker) archive DOI."
     end
 
     def default_example_invocation
