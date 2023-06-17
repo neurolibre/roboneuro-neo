@@ -83,7 +83,9 @@ buffy:
             silent: true
     openjournals_set_archive:
       only: editors
-    neurolibre_set_data_archive:
+    neurolibre_set_archive:
+      only: editors
+    neurolibre_set_book:
       only: editors
     ping_track_eics:
       only: editors

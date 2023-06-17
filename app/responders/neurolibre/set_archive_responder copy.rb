@@ -4,8 +4,8 @@ require 'faraday'
 
 
 module Neurolibre
-  class SetDataArchiveResponder < Responder
-    keyname :neurolibre_set_data_archive
+  class SetArchiveResponder < Responder
+    keyname :neurolibre_set_archive
 
     def define_listening
       @event_action = "issue_comment.created"
