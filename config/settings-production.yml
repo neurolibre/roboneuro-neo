@@ -378,6 +378,16 @@ buffy:
         mapping:
           id: issue_id
         silent: true
+    neurolibre_sync_pdf:
+      only: editors
+      external_call:
+        url: "https://preprint.neurolibre.org/api/pdf/sync"
+        method: "post"
+        headers:
+          username: <%= ENV['PREVIEW_API_USER'] %>
+          password: <%= ENV['PREVIEW_API_KEY'] %>
+        mapping:
+          id: issue_id
     neurolibre_zenodo_upload_book:
       only: editors
       external_call:
