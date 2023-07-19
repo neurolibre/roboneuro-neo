@@ -13,6 +13,8 @@ class NeurolibreBookBuildTestWorker < BuffyWorker
   
     def perform(url, branch, email)
 
+      puts url
+      puts email
 
       latest_sha = get_target_latest_sha(url, branch)
       puts latest_sha

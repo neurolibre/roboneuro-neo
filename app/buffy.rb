@@ -28,13 +28,13 @@ class Buffy < Sinatra::Base
   post '/neurolibre' do
     sha = SecureRandom.hex
     branch = params[:branch].empty? ? nil : params[:branch]
-    puts branch
-    puts params[:repository]
+    repo =  params[:repository]
+    email = params[:email]
     if params[:journal] == 'Summary PDF'
       #job_id = PaperPreviewWorker.perform_async(params[:repository], params[:journal], branch, sha)
       erb :moved
     elsif params[:journal] == 'Reproducible Preprint'
-      job_id = NeurolibreBookBuildTestWorker.perform_async(params[:repository], branch, params[:email])
+      job_id = NeurolibreBookBuildTestWorker.perform_async(repo, branch, email)
       erb :submitted
     end
   end
