@@ -24,7 +24,7 @@
         <summary>Steps</summary>
         <ul>
         <li> Enter the location of your Git repository (e.g., https://github.com/neurolibre/template or neurolibre/template)</li>
-        <li> Optionally, you can provide a <code>branch name</code>, <code>tag</code> or <code>commit sha</code>.</li>
+        <li> Enter the <code>commit sha</code> at which the NRP will be built.</li>
         <li> Enter your email address and click the <code>Compile preprint</code> button. We will send you the results when the build is completed. </li>
         </ul>
         </details>
@@ -32,26 +32,22 @@
         <p><i class="fas fa-file-pdf"></i><b>NeuroLibre PDF</b> selection will compile a PDF based on your <code>paper.md</code> and <code>paper.bib</code> files. For more information on how to format your paper, please <a href="https://joss.readthedocs.io/en/latest/submitting.html#example-paper-and-bibliography">take a look at our docs.</a></p>
         <details>
         <summary>Steps</summary>
-        <ul>
-          <li> Enter the location of your Git repository (e.g., https://github.com/neurolibre/template or neurolibre/template)</li>
-          <li> Optionally, you can provide a <code>branch name</code>, <code>tag</code> or <code>commit sha</code>.</li>
-          <li> Click the <code>Compile preprint</code> button. Your PDF will be rendered.</li>
-        </ul>
+          Deprecated. Please see <a href="https://docs.neurolibre.org"> the documentation </a> to learn how to use GitHub actions for PDF builds.
         </details>
         <br>
         <form id="preview-form" action="/neurolibre" accept-charset="UTF-8" method="post">
           <div class="form-group">
             <div class="row">
               <div class="col">
-                <label for="repository">Preprint repository</label>
+                <label for="repository">Preprint repository (REQUIRED)</label>
                 <input placeholder="https://github.com/neurolibre/template or neurolibre/template" class="form-control" type="text" name="repository" id="repository" />
               </div>
               <div class="col">
-                <label for="branch">Commit sha (required)</label>
+                <label for="branch">Commit sha (REQUIRED)</label>
                 <input placeholder="branch, tag or commit" class="form-control" type="text" name="branch" id="branch" />
               </div>
               <div class="col">
-              <label for="email">Email address:</label>
+              <label for="email">Email address (REQUIRED)</label>
               <input placeholder="user@mail.com" class="form-control" type="text" name="email" id="email" />
             </div>
             </div>
