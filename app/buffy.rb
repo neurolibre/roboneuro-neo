@@ -27,7 +27,7 @@ class Buffy < Sinatra::Base
 
   post '/neurolibre' do
     sha = SecureRandom.hex
-    branch = params[:branch].empty? ? nil : params[:branch]
+    branch = params[:branch]
     repo =  params[:repository]
     email = params[:email]
     if params[:journal] == 'Summary PDF'

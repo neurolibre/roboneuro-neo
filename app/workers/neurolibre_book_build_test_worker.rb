@@ -11,22 +11,11 @@ class NeurolibreBookBuildTestWorker < BuffyWorker
     include GitHub
     include NeurolibreUtilities
   
-    def perform(url, branch, email)
+    def perform(url, sha, email)
 
-      puts url
-      puts email
-
-      latest_sha = get_target_latest_sha(url, branch)
-      puts latest_sha
-
-      if latest_sha.nil?
-        # respond "Requested branch/SHA does not exist for #{url}"
-      else
-        parameters = {"repo_url": url,"commit_hash": latest_sha, "email": email}
-      end
-
+      parameters = {"repo_url": url,"commit_hash": sha, "email": email}
       puts parameters
-      #request_book_build_test(parameters)
+      request_book_build_test(parameters)
 
     end
   end
