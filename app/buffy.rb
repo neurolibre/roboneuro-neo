@@ -28,6 +28,8 @@ class Buffy < Sinatra::Base
   post '/neurolibre' do
     sha = SecureRandom.hex
     branch = params[:branch].empty? ? nil : params[:branch]
+    puts branch
+    puts params[:repository]
     if params[:journal] == 'Summary PDF'
       #job_id = PaperPreviewWorker.perform_async(params[:repository], params[:journal], branch, sha)
       erb :moved
