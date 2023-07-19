@@ -30,7 +30,7 @@ class Buffy < Sinatra::Base
     branch = params[:branch].empty? ? nil : params[:branch]
     if params[:journal] == 'Summary PDF'
       #job_id = PaperPreviewWorker.perform_async(params[:repository], params[:journal], branch, sha)
-      redirect "/moved"
+      erb :moved
     elsif params[:journal] == 'Reproducible Preprint'
       job_id = NeurolibreBookBuildTestWorker.perform_async(params[:repository], branch, params[:email])
       erb :submitted

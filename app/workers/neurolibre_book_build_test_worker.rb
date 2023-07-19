@@ -22,7 +22,7 @@ class NeurolibreBookBuildTestWorker < BuffyWorker
           :repo_url => url,
           :commit_hash => latest_sha,
           :email => email
-        }.to_json
+        }
       end
 
       request_book_build_test(post_params)
