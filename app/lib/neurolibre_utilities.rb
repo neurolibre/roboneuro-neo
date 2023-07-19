@@ -204,6 +204,13 @@ module NeurolibreUtilities
     
     end
 
+    def request_book_build_test(payload_in)
+        
+        response = neurolibre_test_client.post('/api/book/build/test', payload_in)
+        Logger.new(STDOUT).warn(response)
+    
+    end
+
     # def request_book_build(payload_in)
     #     # [Book]->[POST /api/book/build]
     #     # Preview server exclusive.

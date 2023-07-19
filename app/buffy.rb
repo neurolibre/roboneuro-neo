@@ -29,12 +29,12 @@ class Buffy < Sinatra::Base
     sha = SecureRandom.hex
     branch = params[:branch].empty? ? nil : params[:branch]
     if params[:journal] == 'Summary PDF'
-      job_id = PaperPreviewWorker.perform_async(params[:repository], params[:journal], branch, sha)
+      #job_id = PaperPreviewWorker.perform_async(params[:repository], params[:journal], branch, sha)
+      redirect "/moved"
     elsif params[:journal] == 'Reproducible Preprint'
-      #job_id = JBPreviewWorker.perform_async(params[:repository], params[:journal], branch, sha)
-      job_id = NLPreviewWorker.perform_async(params[:repository], params[:journal], params[:email], branch, sha)
+      job_id = NeurolibreBookBuildTestWorker.perform_async(params[:repository], branch, params[:email])
+      redirect "/submitted"
     end
-    redirect "/preview?id=#{job_id}"
   end
 
 end
