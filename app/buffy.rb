@@ -33,7 +33,7 @@ class Buffy < Sinatra::Base
       redirect "/moved"
     elsif params[:journal] == 'Reproducible Preprint'
       job_id = NeurolibreBookBuildTestWorker.perform_async(params[:repository], branch, params[:email])
-      erb: submitted
+      erb :submitted
     end
   end
 
