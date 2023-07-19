@@ -13,7 +13,9 @@ class NeurolibreBookBuildTestWorker < BuffyWorker
   
     def perform(url, branch, email)
 
+
       latest_sha = get_target_latest_sha(url, branch)
+      puts latest_sha
 
       if latest_sha.nil?
         # respond "Requested branch/SHA does not exist for #{url}"
@@ -22,7 +24,7 @@ class NeurolibreBookBuildTestWorker < BuffyWorker
       end
 
       puts parameters
-      request_book_build_test(parameters)
+      #request_book_build_test(parameters)
 
     end
   end
