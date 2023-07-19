@@ -206,7 +206,7 @@ module NeurolibreUtilities
 
     def request_book_build_test(payload_in)
         
-        response = neurolibre_test_client.post('/api/book/build/test', payload_in)
+        response = neurolibre_test_client.post('/api/book/build/test', payload_in.to_json)
         Logger.new(STDOUT).warn(response)
     
     end

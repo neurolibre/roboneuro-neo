@@ -18,14 +18,11 @@ class NeurolibreBookBuildTestWorker < BuffyWorker
       if latest_sha.nil?
         # respond "Requested branch/SHA does not exist for #{url}"
       else
-        post_params = {
-          :repo_url => url,
-          :commit_hash => latest_sha,
-          :email => email
-        }
+        parameters = {"repo_url": url,"commit_hash": latest_sha, "email": email}
       end
 
-      request_book_build_test(post_params)
+      puts parameters
+      request_book_build_test(parameters)
 
     end
   end
