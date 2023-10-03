@@ -444,3 +444,17 @@ buffy:
           id: issue_id
           repository_url: target-repository
         silent: true
+    neurolibre_draft_extended_pdf:
+      only: editors
+      external_call:
+        url: "https://preprint.neurolibre.org/api/pdf/draft"
+        method: "post"
+        headers:
+          username: <%= ENV['PREVIEW_API_USER'] %>
+          password: <%= ENV['PREVIEW_API_KEY'] %>
+        data_from_issue:
+          - target-repository
+        mapping:
+          id: issue_id
+          repository_url: target-repository
+        silent: true
