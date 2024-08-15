@@ -499,4 +499,4 @@ buffy:
         mapping:
           id: issue_id
           repository_url: target-repository
-        silent: false
+        silent: true
