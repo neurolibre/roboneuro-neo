@@ -489,7 +489,7 @@ buffy:
     neurolibre_cache_data:
       only: editors
       external_call:
-        url: "https://preprint.neurolibre.org/api/data/cache"
+        url: "https://preview.neurolibre.org/api/data/cache"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
