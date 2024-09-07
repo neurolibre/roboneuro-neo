@@ -20,32 +20,20 @@ class ExternalServiceWorker < BuffyWorker
     inputs_from_issue = service['data_from_issue'] || {}
     mapped_parameters = {}
 
-    # inputs_from_issue.each do |input_from_issue|
-    #   mapped_parameters[input_from_issue] = locals[input_from_issue].to_s
-    # end
-
-    # service_mapping.each_pair do |k, v|
-    #   mapped_parameters[k] = locals.delete(v)
-    # end
-
-    # parameters = {}.merge(query_parameters, mapped_parameters)
-
     if service['send_only_mapped']
-      # Only process mapped parameters
       service_mapping.each_pair do |k, v|
-        mapped_parameters[k] = locals[v].to_s if locals.key?(v)
+        mapped_parameters[k] = locals.delete(v) if locals.key?(v)
       end
     else
-      # Process all inputs from issue and then apply mapping
       inputs_from_issue.each do |input_from_issue|
-        mapped_parameters[input_from_issue] = locals[input_from_issue].to_s if locals.key?(input_from_issue)
+        mapped_parameters[input_from_issue] = locals[input_from_issue].to_s
       end
 
       service_mapping.each_pair do |k, v|
-        mapped_parameters[k] = locals[v].to_s if locals.key?(v)
-        mapped_parameters.delete(v) # Remove the original key after mapping
+        mapped_parameters[k] = locals.delete(v)
       end
-    end
+
+  end
 
     parameters = query_parameters.merge(mapped_parameters)
 
