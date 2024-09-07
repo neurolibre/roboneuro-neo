@@ -33,7 +33,7 @@ class ExternalServiceWorker < BuffyWorker
         mapped_parameters[k] = locals.delete(v)
       end
 
-  end
+    end
 
     parameters = query_parameters.merge(mapped_parameters)
 
