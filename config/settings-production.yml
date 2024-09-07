@@ -130,6 +130,18 @@ buffy:
             editor: match_data_1
           success_msg: Invitation to edit this submission sent!
           error_msg: "There was a problem inviting the user to edit this submission."
+      - neurolibre_build_myst:
+          only: editors
+          command: "build myst at @(.*)"
+          description: "Builds myst article"
+          url: "https://preview2.neurolibre.org/api/myst/build"
+          query_params:
+            secret: <%= ENV['JOURNAL_SECRET'] %>
+          mapping:
+            id: issue_id
+            repository_url: target-repository
+            commit_hash: match_data_1
+          silent: true
     github_action:
       - draft_paper:
           command: generate pdf
