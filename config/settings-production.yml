@@ -146,6 +146,7 @@ buffy:
             repository_url: target-repository
             commit_hash: match_data_1
             binder_hash: match_data_2
+          send_only_mapped: true
           silent: true
     github_action:
       - draft_paper:
