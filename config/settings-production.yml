@@ -132,8 +132,8 @@ buffy:
           error_msg: "There was a problem inviting the user to edit this submission."
       - neurolibre_build_myst:
           only: editors
-          command: "build myst"
-          description: "Builds myst article"
+          command: "build (\S+) myst at runtime (\S+)"
+          description: "Builds myst article. First argument is the commit hash, second is the binder hash."
           url: "https://preview2.neurolibre.org/api/myst/build"
           headers:
             username: <%= ENV['PREVIEW_API_USER'] %>
@@ -144,6 +144,8 @@ buffy:
           mapping:
             id: issue_id
             repository_url: target-repository
+            commit_hash: match_data_1
+            binder_hash: match_data_2
           silent: true
     github_action:
       - draft_paper:
