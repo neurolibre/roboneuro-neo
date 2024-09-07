@@ -137,6 +137,9 @@ buffy:
           url: "https://preview2.neurolibre.org/api/myst/build"
           query_params:
             secret: <%= ENV['JOURNAL_SECRET'] %>
+          data_from_issue:
+            - target-repository
+            - issue_id
           mapping:
             id: issue_id
             repository_url: target-repository
