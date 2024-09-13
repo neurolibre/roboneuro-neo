@@ -16,23 +16,27 @@
   <div class="container">
     <div class="row justify-content-lg-center">
       <div class="col-lg-8">
-        <center><img style="height:30vh;" src="https://github.com/neurolibre/brand/blob/main/png/preview_magn.png?raw=true"></center>
+        <center><img style="height:20vh;" src="https://github.com/neurolibre/brand/blob/main/png/preview_magn.png?raw=true"></center>
         <br>
-        <center><p>You can use this page to test that your NeuroLibre notebooks and accompanying PDF compile properly before submitting.</p></center>
-        <p><i class="fas fa-book"></i><b>NeuroLibre book</b> selection will trigger a build for your software environment and executable preprint. Before you start, please ensure that your repository meets the minimum requirements described in <a href="https://docs.neurolibre.org/en/latest/" target="_blank"><strong>NeuroLibre book organization </strong></a>guidelines.</p>
+        <center><h4>If you structured your GitHub repository according to <a href="https://docs.neurolibre.org/en/latest/STRUCTURE.html" target="_blank">NeuroLibre guidelines</a> and <a href="https://github.com/neurolibre/info/issues/new?assignees=agahkarakuzu&labels=DOWNLOAD&projects=&template=data_cache.md&title=" target="_blank">opened an issue</a> for NeuroLibre to cache your data (if applicable), you can try building your preprint here!</h4></center>
+        <p><i class="fas fa-book"></i><b>Reproducible preprint</b> selection will trigger a build for your software environment and executable (if specified) preprint. </p>
         <details>
         <summary>Steps</summary>
         <ul>
         <li> Enter the location of your Git repository (e.g., https://github.com/neurolibre/template or neurolibre/template)</li>
-        <li> Enter the <code>commit sha</code> at which the NRP will be built.</li>
+        <li> Enter the <strong>full</strong> <code>commit sha</code> at which the NRP will be built.</li>
         <li> Enter your email address and click the <code>Compile preprint</code> button. We will send you the results when the build is completed. </li>
         </ul>
         </details>
         <br>
-        <p><i class="fas fa-file-pdf"></i><b>NeuroLibre PDF</b> selection will compile a PDF based on your <code>paper.md</code> and <code>paper.bib</code> files. For more information on how to format your paper, please <a href="https://joss.readthedocs.io/en/latest/submitting.html#example-paper-and-bibliography">take a look at our docs.</a></p>
+        <p><i class="fas fa-file-pdf"></i><b>Summary PDF</b> option will take action only for MyST formatted repositories. Please see <a href="https://docs.neurolibre.org"> the documentation </a> to learn how to use GitHub actions for (non-MyST) PDF builds.</p>
         <details>
         <summary>Steps</summary>
-          Deprecated. Please see <a href="https://docs.neurolibre.org"> the documentation </a> to learn how to use GitHub actions for PDF builds.
+          <ul>
+            <li> Enter the location of your Git repository (e.g., https://github.com/neurolibre/template or neurolibre/template)</li>
+            <li> Enter the <strong>full</strong> <code>commit sha</code> at which the PDF will be built.</li>
+            <li> Enter your email address and click the <code>Compile preprint</code> button. We will send you the results when the build is completed. </li>
+          </ul>
         </details>
         <br>
         <form id="preview-form" action="/neurolibre" accept-charset="UTF-8" method="post">
