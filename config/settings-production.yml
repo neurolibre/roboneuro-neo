@@ -134,7 +134,7 @@ buffy:
           only: editors
           command: "build (\\S+) myst at runtime (\\S+)"
           description: "Builds myst article. First argument is the commit hash, second is the binder hash."
-          url: "https://preview2.neurolibre.org/api/myst/build"
+          url: "https://preview.neurolibre.org/api/myst/build"
           headers:
             username: <%= ENV['PREVIEW_API_USER'] %>
             password: <%= ENV['PREVIEW_API_KEY'] %>
