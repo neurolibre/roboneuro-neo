@@ -21,7 +21,7 @@ module Neurolibre
       ok_reply = "Done, #{new_type} archive is now [#{new_value}](https://doi.org/#{new_value})"
       nok_reply = "Error: `#{new_type}` not found in the issue's body"
 
-      if valid_doi_value?(new_value)
+      if valid_doi_value?(new_value) || new_value == "N/A"
         reply = update_value("#{new_type}-archive", new_value) ? ok_reply : nok_reply
       else
         reply = "That doesn't look like a valid DOI value"
