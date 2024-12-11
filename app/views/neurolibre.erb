@@ -25,9 +25,10 @@
         <details>
         <summary>Steps</summary>
         <ul>
+        <li> Enter your email address</li>
         <li> Enter the location of your Git repository (e.g., https://github.com/neurolibre/template or neurolibre/template)</li>
-        <li> Enter the <strong>full</strong> <code>commit sha</code> at which the NRP will be built.</li>
-        <li> Enter your email address and click the <code>Compile preprint</code> button. We will send you the results when the build is completed. </li>
+        <li> Enter the <strong>full</strong> <code>commit sha</code> at which you successfully built a <a href="https://binder-preview.neurolibre.org" target="_blank">Binder</a> for your repository.</li>
+        <li> Click the <code>Compile preprint</code> button. We will send you the results when the build is completed. </li>
         </ul>
         </details>
         <br>
@@ -45,30 +46,42 @@
           <div class="form-group">
             <div class="row">
               <div class="col">
-                <label for="repository">Preprint repository (REQUIRED)</label>
-                <input placeholder="https://github.com/neurolibre/template or neurolibre/template" class="form-control" type="text" name="repository" id="repository" />
+                <label for="email">Email address (REQUIRED)</label>
+                <input placeholder="user@mail.com" class="form-control" type="text" name="email" id="email" />
+              </div>
+            <div class="col">
+              <label for="repository">Preprint repository (REQUIRED)</label>
+                <input placeholder="https://github.com/neurolibre/mystical-article or neurolibre/mystical-article" class="form-control" type="text" name="repository" id="repository" />
               </div>
               <div class="col">
-                <label for="branch">Commit sha (REQUIRED)</label>
-                <input placeholder="Commit reference" class="form-control" type="text" name="branch" id="branch" />
+                <label for="branch">Binder commit sha (REQUIRED)</label>
+                <input placeholder="Commit ref for successful Binder build" class="form-control" type="text" name="branch" id="branch" />
               </div>
-              <div class="col">
-              <label for="email">Email address (REQUIRED)</label>
-              <input placeholder="user@mail.com" class="form-control" type="text" name="email" id="email" />
-            </div>
+
             </div>
           </div>
           <div class="form-group">
-            <label for="journal">Compile:</label>
+            <label for="journal">Executable Content:</label>
             <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="journal" id="nlnb" value="Reproducible Preprint" checked>
-              <label class="form-check-label" for="inlineRadio2">Reproducible Preprint</label>
+              <input class="form-check-input" type="radio" name="journal" id="nlnb" value="True" checked>
+              <label class="form-check-label" for="inlineRadio2">Yes</label>
             </div>
             <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="journal" id="nlpaper" value="Summary PDF">
-            <label class="form-check-label" for="inlineRadio1">Summary PDF</label>
+            <input class="form-check-input" type="radio" name="journal" id="nlpaper" value="False">
+            <label class="form-check-label" for="inlineRadio1">No</label>
           </div>
           </div>
+          <script>
+            document.querySelectorAll('input[name="journal"]').forEach(radio => {
+              radio.addEventListener('change', function() {
+                const branchInput = document.getElementById('branch');
+                branchInput.disabled = this.value === 'False';
+                if (this.value === 'False') {
+                  branchInput.value = '';
+                }
+              });
+            });
+          </script>
           <div class="form-actions">
             <input type="submit" name="commit" value="Compile preprint" class="btn" data-disable-with="Update profile" />
           </div>

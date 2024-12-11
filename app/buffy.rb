@@ -30,13 +30,9 @@ class Buffy < Sinatra::Base
     branch = params[:branch]
     repo =  params[:repository]
     email = params[:email]
-    if params[:journal] == 'Summary PDF'
-      #job_id = PaperPreviewWorker.perform_async(params[:repository], params[:journal], branch, sha)
-      erb :moved
-    elsif params[:journal] == 'Reproducible Preprint'
-      job_id = NeurolibreBookBuildTestWorker.perform_async(repo, branch, email)
-      erb :submitted
-    end
+    executable = params[:journal]
+    job_id = NeurolibreBookBuildTestWorker.perform_async(repo, branch, email, executable)
+    erb :submitted
   end
 
 end
