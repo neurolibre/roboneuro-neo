@@ -15,6 +15,12 @@
       padding: 2rem;
     }
 
+    .required::after {
+      content: '*';
+      color: red;
+      margin-left: 2px;
+    }
+
     .card {
       background: white;
       border-radius: 8px;
@@ -99,7 +105,7 @@
     }
 
     .section-header i {
-      color: #007bff;
+      color: red;
     }
 
     .info-text {
@@ -108,7 +114,7 @@
     }
 
     a {
-      color: #007bff;
+      color: red;
       text-decoration: none;
     }
 
@@ -140,7 +146,7 @@
           <hr>
 
           <div class="section-header">
-            <i class="fas fa-file-pdf"></i>
+            <i class="fas fa-bolt"></i>
             <b>Does your preprint contain executable content?</b>
           </div>
 
@@ -154,7 +160,7 @@
           </details>
 
           <div class="section-header">
-            <i class="fas fa-book"></i>
+            <i class="fas fa-wpforms"></i>
             <b>Required inputs</b>
           </div>
 
@@ -172,15 +178,15 @@
             <div class="form-group">
               <div class="row">
                 <div class="col">
-                  <label for="email">Email address (REQUIRED)</label>
+                  <label for="email" class="required">Email address</label>
                   <input placeholder="user@mail.com" class="form-control" type="email" name="email" id="email" required />
                 </div>
                 <div class="col">
-                  <label for="repository">Preprint repository (REQUIRED)</label>
+                  <label for="repository" class="required">Preprint repository</label>
                   <input placeholder="neurolibre/mystical-article" class="form-control" type="text" name="repository" id="repository" required />
                 </div>
                 <div class="col">
-                  <label for="branch">Binder commit reference (REQUIRED)</label>
+                  <label for="branch" class="required">Binder commit reference</label>
                   <input placeholder="Commit ref for successful Binder build" class="form-control" type="text" name="branch" id="branch" required />
                 </div>
               </div>
