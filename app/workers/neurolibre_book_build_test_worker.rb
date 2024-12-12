@@ -12,8 +12,10 @@ class NeurolibreBookBuildTestWorker < BuffyWorker
     include NeurolibreUtilities
   
     def perform(url, sha, email, executable)
-
-      parameters = {"repo_url": url,"commit_hash": sha, "email": email, "executable": executable}
+      if executable == "False"
+        sha = "noexec"
+      end
+      parameters = {"repo_url": url,"commit_hash": sha, "email": email}
       puts parameters
       request_book_build_test(parameters)
 
