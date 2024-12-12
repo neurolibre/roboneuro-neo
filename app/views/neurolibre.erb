@@ -3,98 +3,223 @@
 <head>
   <title>RoboNeuro preview page</title>
   <link rel="stylesheet" media="all" href="application.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
   <style>
-    p {
-      color: black;
+    body {
+      background-color: #f8f9fa;
+      color: #212529;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
-    h5 {
-      color: black;
+
+    .container {
+      padding: 2rem;
     }
-    li {
-      color: black;
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      margin-bottom: 2rem;
     }
+
+    .logo-container {
+      margin-bottom: 2rem;
+    }
+
+    .logo-container img {
+      height: 20vh;
+      max-width: 100%;
+    }
+
+    hr {
+      border: none;
+      border-top: 2px solid #e9ecef;
+      margin: 1.5rem 0;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-control {
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      padding: 0.75rem;
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    .form-control:focus {
+      border-color: #80bdff;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      outline: none;
+    }
+
+    .btn {
+      background-color: #007bff;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0.75rem 1.5rem;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #0056b3;
+    }
+
     details {
-      color: black;
+      background: #f8f9fa;
+      border-radius: 4px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    summary:hover {
+      color: #007bff;
+    }
+
+    .form-check-inline {
+      margin-right: 1.5rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-header i {
+      color: #007bff;
+    }
+
+    .info-text {
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-
   <div class="container">
     <div class="row justify-content-lg-center">
       <div class="col-lg-8">
-        <center><img style="height:20vh;" src="https://github.com/neurolibre/brand/blob/main/png/preview_magn.png?raw=true"></center>
-        <br>
-        <hr>
-        <center><h5>Structured your GitHub repository according to <a href="https://docs.neurolibre.org/en/latest/STRUCTURE.html" target="_blank">NeuroLibre guidelines</a>?<br> <a href="https://github.com/neurolibre/info/issues/new?assignees=agahkarakuzu&labels=DOWNLOAD&projects=&template=data_cache.md&title=" target="_blank">Opened an issue</a> for NeuroLibre to cache your data (if applicable)?<br> Successfully built a <a href="https://binder-preview.neurolibre.org" target="_blank">Binder</a> for your repository (if executable)?<br> Now you can try building your living preprint here!</h5></center>
-        <hr>
-        <p><i class="fas fa-file-pdf"></i><b>Does your preprint contain executable content?</b></p>
-        <details>
-        <summary>Toggle for instructions</summary>
-        <p>Select whether your preprint includes code that needs to be executed (like Python notebooks, R scripts, etc.).</p>
-          <ul>
-            <li> Select <b>Yes</b> if your preprint contains code that needs to run. This requires a successful <a href="https://binder-preview.neurolibre.org" target="_blank">NeuroLibre Binder</a> build. You'll need to provide the specific commit SHA (from your repository) at which a Binder was successfully built. </li>
-            <li> Select <b>No</b> if your preprint only contains static content (like Markdown, LaTeX files, or notebooks without code) that doesn't require any code execution. </li>
-          </ul>
-        </details>
-        <br>
-        <p><i class="fas fa-book"></i><b>Required inputs </b></p>
-        <details>
-        <summary>Toggle for instructions</summary>
-        <ul>
-        <li>Enter your email address where you'd like to receive build notifications</li>
-        <li>Enter your GitHub repository URL (e.g., https://github.com/neurolibre/mystical-article  ) or shorthand format (e.g., neurolibre/mystical-article)</li>
-        <li>If you selected "Yes" for executable content, enter the full commit hash of your successful <a href="https://binder-preview.neurolibre.org" target="_blank">Binder</a> build</li>
-        <li>Click "Build preprint" to start the build. You'll receive email notifications about the build progress and results.</li>
-        </ul>
-        </details>
-        <br>
-        <form id="preview-form" action="/neurolibre" accept-charset="UTF-8" method="post">
-          <div class="form-group">
-            <div class="row">
-              <div class="col">
-                <label for="email">Email address (REQUIRED)</label>
-                <input placeholder="user@mail.com" class="form-control" type="text" name="email" id="email" />
-              </div>
-            <div class="col">
-              <label for="repository">Preprint repository (REQUIRED)</label>
-                <input placeholder="https://github.com/neurolibre/mystical-article or neurolibre/mystical-article" class="form-control" type="text" name="repository" id="repository" />
-              </div>
-              <div class="col">
-                <label for="branch">Binder commit reference (REQUIRED)</label>
-                <input placeholder="Commit ref for successful Binder build" class="form-control" type="text" name="branch" id="branch" />
-              </div>
+        <div class="card">
+          <div class="logo-container text-center">
+            <img src="https://github.com/neurolibre/brand/blob/main/png/preview_magn.png?raw=true" alt="NeuroLibre Logo">
+          </div>
 
+          <hr>
+          
+          <div class="info-text">
+            <h5>
+              Structured your GitHub repository according to <a href="https://docs.neurolibre.org/en/latest/STRUCTURE.html" target="_blank">NeuroLibre guidelines</a>?<br>
+              <a href="https://github.com/neurolibre/info/issues/new?assignees=agahkarakuzu&labels=DOWNLOAD&projects=&template=data_cache.md&title=" target="_blank">Opened an issue</a> for NeuroLibre to cache your data (if applicable)?<br>
+              Successfully built a <a href="https://binder-preview.neurolibre.org" target="_blank">Binder</a> for your repository (if executable)?<br>
+              Now you can try building your living preprint here!
+            </h5>
+          </div>
+
+          <hr>
+
+          <div class="section-header">
+            <i class="fas fa-file-pdf"></i>
+            <b>Does your preprint contain executable content?</b>
+          </div>
+
+          <details>
+            <summary>Toggle for instructions</summary>
+            <p>Select whether your preprint includes code that needs to be executed (like Python notebooks, R scripts, etc.).</p>
+            <ul>
+              <li>Select <b>Yes</b> if your preprint contains code that needs to run. This requires a successful <a href="https://binder-preview.neurolibre.org" target="_blank">NeuroLibre Binder</a> build. You'll need to provide the specific commit SHA (from your repository) at which a Binder was successfully built.</li>
+              <li>Select <b>No</b> if your preprint only contains static content (like Markdown, LaTeX files, or notebooks without code) that doesn't require any code execution.</li>
+            </ul>
+          </details>
+
+          <div class="section-header">
+            <i class="fas fa-book"></i>
+            <b>Required inputs</b>
+          </div>
+
+          <details>
+            <summary>Toggle for instructions</summary>
+            <ul>
+              <li>Enter your email address where you'd like to receive build notifications</li>
+              <li>Enter your GitHub repository URL (e.g., https://github.com/neurolibre/mystical-article) or shorthand format (e.g., neurolibre/mystical-article)</li>
+              <li>If you selected "Yes" for executable content, enter the full commit hash of your successful <a href="https://binder-preview.neurolibre.org" target="_blank">Binder</a> build</li>
+              <li>Click "Build preprint" to start the build. You'll receive email notifications about the build progress and results.</li>
+            </ul>
+          </details>
+
+          <form id="preview-form" action="/neurolibre" accept-charset="UTF-8" method="post">
+            <div class="form-group">
+              <div class="row">
+                <div class="col">
+                  <label for="email">Email address (REQUIRED)</label>
+                  <input placeholder="user@mail.com" class="form-control" type="email" name="email" id="email" required />
+                </div>
+                <div class="col">
+                  <label for="repository">Preprint repository (REQUIRED)</label>
+                  <input placeholder="neurolibre/mystical-article" class="form-control" type="text" name="repository" id="repository" required />
+                </div>
+                <div class="col">
+                  <label for="branch">Binder commit reference (REQUIRED)</label>
+                  <input placeholder="Commit ref for successful Binder build" class="form-control" type="text" name="branch" id="branch" required />
+                </div>
+              </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label for="journal">Executable Content</label>
-            <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="journal" id="nlnb" value="True" checked>
-              <label class="form-check-label" for="inlineRadio2">Yes</label>
+
+            <div class="form-group">
+              <label for="journal">Executable Content</label>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="journal" id="nlnb" value="True" checked>
+                <label class="form-check-label" for="nlnb">Yes</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="journal" id="nlpaper" value="False">
+                <label class="form-check-label" for="nlpaper">No</label>
+              </div>
             </div>
-            <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="journal" id="nlpaper" value="False">
-            <label class="form-check-label" for="inlineRadio1">No</label>
-          </div>
-          </div>
-          <script>
-            document.querySelectorAll('input[name="journal"]').forEach(radio => {
-              radio.addEventListener('change', function() {
-                const branchInput = document.getElementById('branch');
-                branchInput.disabled = this.value === 'False';
-                if (this.value === 'False') {
-                  branchInput.value = '';
-                }
-              });
-            });
-          </script>
-          <div class="form-actions">
-            <input type="submit" name="commit" value="Compile preprint" class="btn" data-disable-with="Update profile" />
-          </div>
-        </form>
+
+            <div class="form-actions">
+              <input type="submit" name="commit" value="Build preprint" class="btn" />
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
+
+  <script>
+    document.querySelectorAll('input[name="journal"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        const branchInput = document.getElementById('branch');
+        branchInput.disabled = this.value === 'False';
+        if (this.value === 'False') {
+          branchInput.value = '';
+          branchInput.required = false;
+        } else {
+          branchInput.required = true;
+        }
+      });
+    });
+  </script>
 </body>
 </html>
