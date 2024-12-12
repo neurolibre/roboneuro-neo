@@ -160,7 +160,7 @@
           </details>
 
           <div class="section-header">
-            <i class="fas fa-wpforms"></i>
+            <i class="fas fa-keyboard"></i>
             <b>Required inputs</b>
           </div>
 
@@ -217,12 +217,16 @@
     document.querySelectorAll('input[name="journal"]').forEach(radio => {
       radio.addEventListener('change', function() {
         const branchInput = document.getElementById('branch');
+        const branchLabel = branchInput.previousElementSibling;
+
         branchInput.disabled = this.value === 'False';
         if (this.value === 'False') {
           branchInput.value = '';
           branchInput.required = false;
+          branchLabel.classList.remove('required');
         } else {
           branchInput.required = true;
+          branchLabel.classList.add('required');
         }
       });
     });
