@@ -1,8 +1,21 @@
 require 'bibtex'
 require 'faraday'
 require 'serrano'
+require 'multi_json'
+
+# Join Crossref's "polite pool" (much higher, dedicated rate limit instead of
+# the shared ~1 req/sec anonymous pool). Serrano also reads CROSSREF_EMAIL
+# from the environment automatically, but we set a fallback here so bib files
+# with many DOI-less entries don't trip the anonymous limit.
+Serrano.configuration do |config|
+  config.mailto = ENV['CROSSREF_EMAIL'] || 'noreply@neurolibre.org'
+end
 
 class DOIChecker
+
+  CROSSREF_MAX_ATTEMPTS = 3
+  CROSSREF_RETRY_DELAY = 2 # seconds, doubled on each retry
+  CROSSREF_LOOKUP_DELAY = 1 # seconds between sequential lookups in one paper
 
   def initialize(entries=[])
     @entries = entries
@@ -26,6 +39,7 @@ class DOIChecker
             elsif candidate_doi
               doi_summary[:missing].push("#{candidate_doi} may be a valid DOI for title: #{entry.title}")
             end
+            sleep(CROSSREF_LOOKUP_DELAY)
         end
       end
     end
@@ -61,7 +75,9 @@ class DOIChecker
   end
 
   def crossref_lookup(title)
-    works = Serrano.works(query: title)
+    works = crossref_works_with_retry(title)
+    return "CROSSREF-ERROR" if works.nil?
+
     if works['message'].any? && works['message']['items'].any?
       if works['message']['items'].first.has_key?('DOI')
         candidate = works['message']['items'].first
@@ -75,6 +91,29 @@ class DOIChecker
     nil
   rescue Serrano::InternalServerError, Serrano::GatewayTimeout, Serrano::BadGateway, Serrano::ServiceUnavailable
     return "CROSSREF-ERROR"
+  end
+
+  # Serrano's own HTTP call (serrano/request_cursor.rb#_req) does a bare
+  # `MultiJson.load(res.body)` with no status check and no retry, so a rate
+  # limited (429, empty body) or otherwise non-JSON Crossref response raises
+  # MultiJson::ParseError instead of a handleable Serrano error class. Retry
+  # a few times with backoff before giving up, and log which title we were
+  # querying so a failure is traceable instead of a bare stack trace.
+  def crossref_works_with_retry(title)
+    attempts = 0
+    begin
+      attempts += 1
+      Logger.new(STDOUT).info("DOIChecker: querying Crossref for title: #{title} (attempt #{attempts})")
+      Serrano.works(query: title)
+    rescue MultiJson::ParseError => e
+      if attempts < CROSSREF_MAX_ATTEMPTS
+        sleep(CROSSREF_RETRY_DELAY * attempts)
+        retry
+      else
+        Logger.new(STDOUT).warn("DOIChecker: Crossref returned an unparseable response for title \"#{title}\" after #{attempts} attempts: #{e.message}")
+        nil
+      end
+    end
   end
 
   # How different are two strings?
