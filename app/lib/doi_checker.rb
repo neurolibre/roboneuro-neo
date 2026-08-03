@@ -103,7 +103,6 @@ class DOIChecker
     attempts = 0
     begin
       attempts += 1
-      Logger.new(STDOUT).info("DOIChecker: querying Crossref for title: #{title} (attempt #{attempts})")
       Serrano.works(query: title)
     rescue MultiJson::ParseError => e
       if attempts < CROSSREF_MAX_ATTEMPTS
