@@ -5,8 +5,8 @@ if ENV["CUSTOM_RUBY_VERSION"]
 end
 
 gem 'octokit'
-gem 'sinatra', '3.0.5'
-gem 'sinatra-contrib', '3.0.5'
+gem 'sinatra', '4.1.1'
+gem 'sinatra-contrib', '4.1.1'
 gem 'openssl'
 gem 'puma'
 gem 'sidekiq'
@@ -20,6 +20,11 @@ gem 'licensee'
 gem 'issue'
 gem 'chronic'
 gem "ruby-openai"
+
+# Ruby 3.4 moved bigdecimal from a default gem to a bundled one. crack, via
+# webmock, requires it at runtime without declaring it, so the suite fails to
+# load on 3.4 unless it is in the bundle explicitly.
+gem 'bigdecimal'
 
 group :test do
   gem 'rack-test'
