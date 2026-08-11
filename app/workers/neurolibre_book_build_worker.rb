@@ -43,7 +43,6 @@ class NeurolibreBookBuildWorker < BuffyWorker
 
       if book_exists_result == nil
 
-        #gpt_quote = get_funny_quote(url)
         # Respond in issue with update that book is building
         #respond " :seedling: I've started building your NeuroLibre reproducible preprint! :seedling: \n\n My close :robot: friend GPT read your `paper.md` and noted: \n> #{gpt_quote} "
 
