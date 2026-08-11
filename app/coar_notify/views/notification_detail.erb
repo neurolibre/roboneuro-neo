@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification Details - COAR Notify</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Back Button -->
+    <div class="mb-6">
+      <a href="/coar_notify/dashboard?direction=<%= @notification.direction %>" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
+        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow mb-6 p-6">
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <h1 class="text-2xl font-bold text-gray-900 mb-2">Notification Details</h1>
+          <p class="text-gray-600">ID: <%= @notification.notification_id %></p>
+        </div>
+        <%
+          status_colors = {
+            'pending' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'processing' => 'bg-blue-100 text-blue-800 border-blue-200',
+            'processed' => 'bg-green-100 text-green-800 border-green-200',
+            'failed' => 'bg-red-100 text-red-800 border-red-200',
+            'cancelled' => 'bg-gray-100 text-gray-700 border-gray-200'
+          }
+          status_class = status_colors[@notification.status] || 'bg-gray-100 text-gray-800'
+        %>
+        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium border <%= status_class %>">
+          <%= @notification.status.upcase %>
+        </span>
+      </div>
+
+      <% if @notification.retryable? || @notification.cancellable? %>
+        <div class="mt-6 pt-6 border-t border-gray-200 flex items-center gap-3">
+          <% if @notification.retryable? %>
+            <form method="post" action="/coar_notify/dashboard/<%= @notification.id %>/retry"
+                  onsubmit="return confirm('Retry this notification?')">
+              <input type="hidden" name="token" value="<%= action_token('retry', @notification.id) %>">
+              <button type="submit"
+                      class="px-4 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700">
+                Retry
+              </button>
+            </form>
+            <span class="text-sm text-gray-500">Re-runs this notification. It will be attempted again from the start.</span>
+          <% end %>
+
+          <% if @notification.cancellable? %>
+            <form method="post" action="/coar_notify/dashboard/<%= @notification.id %>/cancel"
+                  onsubmit="return confirm('Cancel this notification? This cannot be undone.')">
+              <input type="hidden" name="token" value="<%= action_token('cancel', @notification.id) %>">
+              <button type="submit"
+                      class="px-4 py-2 rounded-md text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50">
+                Cancel
+              </button>
+            </form>
+            <span class="text-sm text-gray-500">Marks this notification cancelled. It will not be processed.</span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Column - Details -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Basic Info -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Basic Information</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Direction</label>
+              <p class="mt-1 text-gray-900 capitalize"><%= @notification.direction %></p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700">Notification Types</label>
+              <div class="mt-1 flex flex-wrap gap-2">
+                <% @notification.notification_types.each do |type| %>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    <%= type %>
+                  </span>
+                <% end %>
+              </div>
+            </div>
+            <% if @notification.summary %>
+              <div>
+                <label class="text-sm font-medium text-gray-700">Summary</label>
+                <p class="mt-1 text-gray-900"><%= @notification.summary %></p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Origin & Target -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Origin & Target</h2>
+          </div>
+          <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900 mb-3">Origin</h3>
+              <div class="space-y-2">
+                <div>
+                  <label class="text-xs font-medium text-gray-600">ID</label>
+                  <p class="text-sm text-gray-900 break-all"><%= @notification.origin_id %></p>
+                </div>
+                <% if @notification.origin_inbox %>
+                  <div>
+                    <label class="text-xs font-medium text-gray-600">Inbox</label>
+                    <p class="text-sm text-blue-600 break-all"><%= @notification.origin_inbox %></p>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900 mb-3">Target</h3>
+              <div class="space-y-2">
+                <div>
+                  <label class="text-xs font-medium text-gray-600">ID</label>
+                  <p class="text-sm text-gray-900 break-all"><%= @notification.target_id %></p>
+                </div>
+                <% if @notification.target_inbox %>
+                  <div>
+                    <label class="text-xs font-medium text-gray-600">Inbox</label>
+                    <p class="text-sm text-blue-600 break-all"><%= @notification.target_inbox %></p>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Object & Context -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Object & Context</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Object ID</label>
+              <p class="mt-1 text-sm text-blue-600 break-all"><%= @notification.object_id %></p>
+              <% if @notification.object_type %>
+                <p class="mt-1 text-xs text-gray-600">Type: <%= @notification.object_type %></p>
+              <% end %>
+            </div>
+            <% if @notification.context_id %>
+              <div>
+                <label class="text-sm font-medium text-gray-700">Context ID</label>
+                <p class="mt-1 text-sm text-blue-600 break-all"><%= @notification.context_id %></p>
+                <% if @notification.context_type %>
+                  <p class="mt-1 text-xs text-gray-600">Type: <%= @notification.context_type %></p>
+                <% end %>
+              </div>
+            <% end %>
+            <% if @notification.in_reply_to %>
+              <div>
+                <label class="text-sm font-medium text-gray-700">In Reply To</label>
+                <p class="mt-1 text-sm text-gray-600 break-all"><%= @notification.in_reply_to %></p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Actor -->
+        <% if @notification.actor_id || @notification.actor_name %>
+          <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+              <h2 class="text-lg font-semibold text-gray-900">Actor</h2>
+            </div>
+            <div class="p-6 space-y-2">
+              <% if @notification.actor_name %>
+                <div>
+                  <label class="text-sm font-medium text-gray-700">Name</label>
+                  <p class="mt-1 text-gray-900"><%= @notification.actor_name %></p>
+                </div>
+              <% end %>
+              <% if @notification.actor_id %>
+                <div>
+                  <label class="text-sm font-medium text-gray-700">ID</label>
+                  <p class="mt-1 text-sm text-gray-600 break-all"><%= @notification.actor_id %></p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Full Payload -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">Full JSON-LD Payload</h2>
+            <button onclick="copyPayload()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+              Copy to Clipboard
+            </button>
+          </div>
+          <div class="p-6">
+            <pre id="payload" class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-xs"><%= JSON.pretty_generate(@notification.payload) %></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column - Metadata -->
+      <div class="space-y-6">
+        <!-- Processing Info -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Processing</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Status</label>
+              <p class="mt-1 text-gray-900 capitalize"><%= @notification.status %></p>
+            </div>
+            <% if @notification.processed_at %>
+              <div>
+                <label class="text-sm font-medium text-gray-700">Processed At</label>
+                <p class="mt-1 text-sm text-gray-900"><%= @notification.processed_at.strftime('%B %d, %Y at %I:%M %p') %></p>
+              </div>
+            <% end %>
+            <% if @notification.error_message %>
+              <div>
+                <label class="text-sm font-medium text-red-700">Error Message</label>
+                <p class="mt-1 text-sm text-red-600 bg-red-50 p-3 rounded border border-red-200"><%= @notification.error_message %></p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- NeuroLibre Mapping -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">NeuroLibre Mapping</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            <% if @notification.paper_doi %>
+              <div>
+                <label class="text-sm font-medium text-gray-700">Paper DOI</label>
+                <p class="mt-1 text-sm text-gray-900"><%= @notification.paper_doi %></p>
+              </div>
+            <% end %>
+            <% if @notification.service_name %>
+              <div>
+                <label class="text-sm font-medium text-gray-700">Service Name</label>
+                <p class="mt-1 text-gray-900 capitalize"><%= @notification.service_name %></p>
+              </div>
+            <% end %>
+            <% if @notification.issue_id %>
+              <div>
+                <label class="text-sm font-medium text-gray-700">GitHub Issue</label>
+                <p class="mt-1 text-sm text-gray-900">#<%= @notification.issue_id %></p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Timestamps -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Timestamps</h2>
+          </div>
+          <div class="p-6 space-y-4">
+            <div>
+              <label class="text-sm font-medium text-gray-700">Created</label>
+              <p class="mt-1 text-sm text-gray-900"><%= @notification.created_at.strftime('%B %d, %Y at %I:%M %p') %></p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700">Last Updated</label>
+              <p class="mt-1 text-sm text-gray-900"><%= @notification.updated_at.strftime('%B %d, %Y at %I:%M %p') %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function copyPayload() {
+      const payload = document.getElementById('payload').textContent;
+      navigator.clipboard.writeText(payload).then(() => {
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        button.classList.remove('text-blue-600', 'hover:text-blue-800');
+        button.classList.add('text-green-600');
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove('text-green-600');
+          button.classList.add('text-blue-600', 'hover:text-blue-800');
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

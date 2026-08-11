@@ -87,6 +87,8 @@ buffy:
       only: editors
     neurolibre_set_book:
       only: editors
+    neurolibre_coar:
+      only: editors
     ping_track_eics:
       only: editors
     external_service:
@@ -689,3 +691,16 @@ buffy:
           id: issue_id
           repository_url: target-repository
         silent: true
+
+coar_notify:
+  env:
+    enabled: <%= ENV['COAR_NOTIFY_ENABLED'] == 'true' %>
+    inbox_url: <%= ENV['COAR_INBOX_URL'] || 'https://robo.neurolibre.org/coar_notify/inbox' %>
+    service_id: <%= ENV['COAR_SERVICE_ID'] || 'https://neurolibre.org' %>
+    database_url: "<%= ENV['DATABASE_URL'] %>"
+    ip_whitelist_enabled: <%= ENV['COAR_IP_WHITELIST_ENABLED'] == 'true' %>
+    allowed_ips: <%= (ENV['COAR_ALLOWED_IPS'] || '').split(',').map(&:strip) %>
+    sql_log_level: <%= ENV['COAR_SQL_LOG_LEVEL'] || 'ERROR' %>  # DEBUG, INFO, WARN, ERROR, FATAL
+    outbox_secret: "<%= ENV['COAR_OUTBOX_SECRET'] || ENV['ROBONEURO_SECRET'] %>"
+    dashboard_user: "<%= ENV['COAR_DASHBOARD_USER'] %>"
+    dashboard_password: "<%= ENV['COAR_DASHBOARD_PASSWORD'] %>"

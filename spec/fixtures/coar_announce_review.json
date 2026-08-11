@@ -1,0 +1,37 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://purl.org/coar/notify"
+  ],
+  "id": "urn:uuid:test-announce-review-001",
+  "type": [
+    "Announce",
+    "coar-notify:ReviewAction"
+  ],
+  "origin": {
+    "id": "https://prereview.org",
+    "inbox": "https://prereview.org/inbox",
+    "type": "Service"
+  },
+  "object": {
+    "id": "https://prereview.org/review/12345",
+    "ietf:cite-as": "https://doi.org/10.5555/12345678",
+    "type": [
+      "Page",
+      "sorg:Review"
+    ]
+  },
+  "context": {
+    "id": "https://doi.org/10.55458/neurolibre.00001"
+  },
+  "target": {
+    "id": "https://robo.neurolibre.org",
+    "inbox": "https://robo.neurolibre.org/coar/inbox",
+    "type": "Service"
+  },
+  "actor": {
+    "id": "https://prereview.org",
+    "name": "PREreview",
+    "type": "Service"
+  }
+}

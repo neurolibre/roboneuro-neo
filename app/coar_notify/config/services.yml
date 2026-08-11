@@ -1,0 +1,41 @@
+# COAR Notify Service Registry
+#
+# This file defines external services that support COAR Notify protocol.
+# Add new services here to enable COAR notifications with them.
+#
+# Configuration for each service:
+#   - name: Human-readable name
+#   - id: Service identifier URL (used in notifications)
+#   - inbox_url: W3C LDN inbox endpoint
+#   - supported_patterns: List of COAR Notify patterns this service supports
+
+services:
+  prereview:
+    name: "PREreview"
+    id: "https://prereview.org"
+    inbox_url: "https://api.prereview.org/inbox"
+    supported_patterns:
+      - RequestReview
+      - AnnounceReview
+      - Accept
+      - Reject
+      - TentativelyAccept
+      - TentativelyReject
+
+  pci:
+    name: "PCI Express"
+    id: "https://pci.express"
+    inbox_url: "https://pci.express/inbox"
+    supported_patterns:
+      - RequestEndorsement
+      - AnnounceEndorsement
+      - Accept
+      - Reject
+
+  sciety:
+    name: "Sciety"
+    id: "https://sciety.org"
+    inbox_url: "https://sciety.org/inbox"
+    supported_patterns:
+      - AnnounceReview
+      - AnnounceRelationship

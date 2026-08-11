@@ -89,6 +89,8 @@ buffy:
       only: editors
     neurolibre_set_book:
       only: editors
+    neurolibre_coar:
+      only: editors
     ping_track_eics:
       only: editors
     external_service:
@@ -691,3 +693,18 @@ buffy:
           id: issue_id
           repository_url: target-repository
         silent: true
+
+coar_notify:
+  env:
+    # Off by default so the suite boots without a COAR database. Specs that
+    # need it set COAR_NOTIFY_ENABLED and DATABASE_URL explicitly.
+    enabled: <%= ENV['COAR_NOTIFY_ENABLED'] == 'true' %>
+    inbox_url: http://test.example.com/coar_notify/inbox
+    service_id: https://neurolibre.org
+    database_url: "<%= ENV['DATABASE_URL'] || 'sqlite::memory:' %>"
+    ip_whitelist_enabled: false
+    allowed_ips: []
+    sql_log_level: ERROR  # DEBUG, INFO, WARN, ERROR, FATAL
+    outbox_secret: "<%= ENV['COAR_OUTBOX_SECRET'] || 'test-outbox-secret' %>"
+    dashboard_user: "<%= ENV['COAR_DASHBOARD_USER'] || 'test-user' %>"
+    dashboard_password: "<%= ENV['COAR_DASHBOARD_PASSWORD'] || 'test-password' %>"
