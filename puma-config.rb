@@ -6,4 +6,9 @@ threads min_threads_count, max_threads_count
 port ENV.fetch("PORT") { 3000 }
 environment ENV.fetch("RACK_ENV") { "development" }
 
+# Enable stdout logging in development
+if ENV.fetch("RACK_ENV") { "development" } == "development"
+  stdout_redirect 'log/puma_stdout.log', 'log/puma_stderr.log', append: true
+end
+
 preload_app!
