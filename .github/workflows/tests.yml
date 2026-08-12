@@ -6,6 +6,9 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.failure-allowed }}
     strategy:
+      # Report every ruby version rather than cancelling siblings on
+      # the first failure.
+      fail-fast: false
       matrix:
         ruby-version: ['3.3', '3.4']
         failure-allowed: [false]
