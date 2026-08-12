@@ -1,242 +1,2097 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RoboNeuro preview page</title>
-  <link rel="stylesheet" media="all" href="application.css" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+
+
   <style>
+    :root {
+      --paper:      #fbfaf7;
+      --paper-warm: #f5f2ec;
+      --ink:        #17171a;
+      --ink-soft:   #3d3d44;
+      --muted:      #71707a;
+      --rule:       #e6e2da;
+      --accent:     #c1272d;
+      --accent-lift:#d8383e;
+      --accent-wash:#fdecec;
+      --leaf:       #4a7c4e;
+      --danger:     #9b3b3b;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+      --sans:  ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+      --mono:  ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
     body {
-      background-color: #f8f9fa;
-      color: #212529;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      background: var(--paper);
+      /* Two very soft washes so the page is not a flat slab of white. */
+      background-image:
+        radial-gradient(60rem 40rem at 12% -10%, #fbf0ef 0%, rgba(251,240,239,0) 60%),
+        radial-gradient(50rem 36rem at 105% 8%, var(--paper-warm) 0%, rgba(245,242,236,0) 55%);
+      background-attachment: fixed;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    .container {
-      padding: 2rem;
+    .page { width: 100%; max-width: 44rem; margin: 0 auto; padding: 1.5rem 1.5rem 5rem; }
+
+    /* ---- Entrance: a short staggered settle, nothing bouncy ---- */
+    .rise { opacity: 0; transform: translateY(0.75rem); animation: rise .7s cubic-bezier(.22,.61,.36,1) forwards; }
+    .d1 { animation-delay: .05s } .d2 { animation-delay: .13s } .d3 { animation-delay: .21s }
+    .d4 { animation-delay: .29s } .d5 { animation-delay: .37s } .d6 { animation-delay: .45s }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rise { animation: none; opacity: 1; transform: none; }
+      * { transition: none !important; }
     }
 
-    .required::after {
-      content: '*';
-      color: red;
-      margin-left: 2px;
+    /* ---- Masthead ---- */
+    .mark {
+      width: 90%; max-width: 90%; height: auto; display: block; margin: 0 0 2.25rem;
+      /* Holds the hero's height even if the image is slow or fails. */
+      aspect-ratio: 807 / 429;
+    }
+    img { max-width: 100%; }
+
+    h1 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(2.4rem, 6vw, 3.6rem);
+      line-height: 1.08;
+      letter-spacing: -0.015em;
+      margin: 0 0 1rem;
+    }
+    h1 em { font-style: italic; color: var(--accent); }
+
+    .standfirst {
+      font-family: var(--serif);
+      font-size: clamp(1.05rem, 2.2vw, 1.2rem);
+      color: var(--ink-soft);
+      margin: 0 0 2.5rem;
+      max-width: 34rem;
     }
 
-    .card {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      padding: 2rem;
-      margin-bottom: 2rem;
+    .rule { height: 1px; background: var(--rule); border: 0; margin: 2.75rem 0; }
+    .checklist { margin-bottom: 3rem; }
+
+    /* ---- Links: underline grows on hover ---- */
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      background-image: linear-gradient(var(--accent), var(--accent));
+      background-size: 0% 1px;
+      background-repeat: no-repeat;
+      background-position: 0 100%;
+      transition: background-size .25s ease;
+      padding-bottom: 1px;
+    }
+    a:hover, a:focus-visible { background-size: 100% 1px; }
+
+    /* ---- Preflight checklist ---- */
+    .section-label {
+      margin-top: 1rem;
+      font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--muted); margin: 0 0 1.25rem;
     }
 
-    .logo-container {
-      margin-bottom: 2rem;
+    .checklist { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+    .checklist li {
+      counter-increment: step;
+      position: relative;
+      padding: 0 0 2.25rem 3.25rem;
+      color: var(--ink-soft);
+      /* Scroll driven: each step settles as it comes into view. */
+      opacity: .25;
+      transform: translateY(0.9rem);
+      transition: opacity .6s ease, transform .6s cubic-bezier(.22,.61,.36,1);
+    }
+    .checklist li:last-child { padding-bottom: 0; }
+    .checklist li.in { opacity: 1; transform: none; }
+
+    .checklist li::before {
+      content: counter(step);
+      position: absolute; left: 0; top: -.15rem;
+      width: 2.1rem; height: 2.1rem;
+      display: grid; place-items: center;
+      border: 1px solid var(--rule);
+      /* Same leaf silhouette as the toggle's knob. */
+      border-radius: 1rem 0rem 1rem;
+      /* A pocket of the same night sky as the bands, with its own few stars.
+         Painted as gradients because box-shadow stars would fall outside. */
+      background-color: rgba(9, 25, 38, .9);
+      background-image:
+        radial-gradient(1.5px 1.5px at 22% 26%, #fbfaf7 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 74% 20%, #ff6ec7 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 34% 72%, #4cd9e8 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 80% 66%, #ffd166 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 56% 44%, #b06cff 50%, transparent 50%),
+        radial-gradient(1.5px 1.5px at 14% 54%, #72eb67 50%, transparent 50%);
+      font-family: var(--serif); font-size: .95rem;
+      color: rgba(255,255,255,.55);
+      transition: border-color .45s ease, color .45s ease, box-shadow .45s ease;
+    }
+    .checklist li.in::before {
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 0 6px var(--accent-wash);
     }
 
-    .logo-container img {
-      height: 20vh;
-      max-width: 100%;
+    /* Connector, drawn downward as the step activates. */
+    .checklist li:not(:last-child)::after {
+      content: ""; position: absolute; left: 1.05rem; top: 2.15rem; bottom: .6rem;
+      width: 1px; background: var(--rule);
+      transform: scaleY(0); transform-origin: top;
+      transition: transform .7s ease .1s;
+    }
+    .checklist li.in::after { transform: scaleY(1); }
+
+    @media (prefers-reduced-motion: reduce) {
+      #stars, #stars2, #stars3,
+      #hstars, #hstars2, #hstars3 { animation: none !important; }
+      .neon-checkbox__borders span,
+      .neon-checkbox__particles span,
+      .neon-checkbox__rings .ring,
+      .neon-checkbox__sparks span { animation: none !important; }
+      .switch:hover .ch:not(:checked) + .slider:before { animation: none !important; }
+      .checklist li { opacity: 1; transform: none; }
+      .checklist li::after { transform: scaleY(1); }
     }
 
-    hr {
-      border: none;
-      border-top: 2px solid #e9ecef;
-      margin: 1.5rem 0;
+    /* ---- Tooltips ---- */
+    .field-head { display: flex; align-items: center; gap: .4rem; margin-bottom: .5rem; }
+    .field-head label { margin-bottom: 0; }
+
+    .tip {
+      position: relative;
+      display: inline-flex;
+      width: .95rem; height: .95rem;
+      color: var(--muted);
+      cursor: help;
+      border-radius: 50%;
+    }
+    .tip svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; }
+    .tip:hover, .tip:focus-visible { color: var(--accent); outline: none; }
+
+    .tip-body {
+      position: absolute;
+      bottom: calc(100% + .55rem);
+      left: 50%;
+      transform: translateX(-50%) translateY(.25rem);
+      z-index: 5;
+      width: max-content; max-width: 17rem;
+      padding: .6rem .75rem;
+      background: var(--ink);
+      color: #fff;
+      font-family: var(--sans);
+      font-size: .78rem; line-height: 1.45; letter-spacing: 0;
+      border-radius: 6px;
+      box-shadow: 0 6px 20px rgba(23,23,26,.18);
+      opacity: 0; visibility: hidden;
+      transition: opacity .18s ease, transform .18s ease, visibility .18s;
+    }
+    /* Little pointer down to the icon. */
+    .tip-body::after {
+      content: "";
+      position: absolute; top: 100%; left: 50%;
+      margin-left: -5px;
+      border: 5px solid transparent;
+      border-top-color: var(--ink);
+    }
+    .tip-body code { background: rgba(255,255,255,.14); padding: 0 .25rem; border-radius: 3px; }
+
+    /* Shown on hover and on keyboard focus, so it is not pointer only. */
+    .tip:hover .tip-body,
+    .tip:focus-visible .tip-body {
+      opacity: 1; visibility: visible;
+      transform: translateX(-50%) translateY(0);
     }
 
-    .form-group {
-      margin-bottom: 1.5rem;
+    /* Near the left edge the bubble would overflow; nudge the first one in. */
+    @media (max-width: 40rem) {
+      .tip-body { left: 0; transform: translateX(0) translateY(.25rem); }
+      .tip-body::after { left: .5rem; }
+      .tip:hover .tip-body, .tip:focus-visible .tip-body { transform: translateX(0) translateY(0); }
     }
 
-    .form-control {
-      border: 1px solid #ced4da;
-      border-radius: 4px;
-      padding: 0.75rem;
+    /* ---- Form ---- */
+    form { margin-top: 3rem; }
+
+    .field { margin-bottom: 1.75rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 40rem) { .grid { grid-template-columns: 1fr; } }
+
+    fieldset { border: 0; padding: 0; margin: 0 0 1.75rem; }
+    legend {
+      padding: 0;
+      font-size: .8rem; letter-spacing: .04em;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+
+    label {
+      display: block;
+      font-size: .8rem; letter-spacing: .04em;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+    label.required::after { content: "*"; color: var(--danger); margin-left: .25rem; }
+
+    input[type="email"], input[type="text"] {
       width: 100%;
-      margin-top: 0.5rem;
+      padding: .8rem 0;
+      border: 0; border-bottom: 1px solid var(--rule);
+      background: transparent;
+      font-family: var(--mono); font-size: .95rem;
+      color: var(--ink);
+      transition: border-color .2s ease;
     }
-
-    .form-control:focus {
-      border-color: #80bdff;
-      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    input::placeholder { color: #b9b6b0; }
+    input[type="email"]:focus, input[type="text"]:focus {
       outline: none;
+      border-bottom-color: var(--accent);
+    }
+    input:disabled { color: #b9b6b0; border-bottom-style: dashed; }
+
+    /* Toggle. The hidden input before it supplies the unchecked value, so
+       the form still posts journal=True or journal=False without JavaScript. */
+    .switch {
+      font-size: 17px;
+      position:  relative;
+      display: inline-block;
+      width: 3.5em;
+      height: 1.5em;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 1rem 0rem 1rem;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 1.5em;
+      width: 1.4em;
+      left: 0em;
+      bottom: 0em;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 1rem 0rem 1rem;
+      border: 3px solid white;
+    }
+    .ch:checked + .slider {
+      background-color: #72eb67;
     }
 
-    .btn {
-      background-color: red;
-      border: none;
-      border-radius: 4px;
+    /* Hover affordance. Only while off, where it is least obvious that this
+       is interactive. Once on, the travelled knob speaks for itself. */
+    .switch:hover .slider { background-color: #b9b9b9; }
+    .switch:hover .ch:not(:checked) + .slider:before {
+      animation: nudge 0.9s ease-in-out infinite;
+    }
+    @keyframes nudge {
+      0%, 100% { transform: translateX(0)      rotate(0deg); }
+      45%      { transform: translateX(0.45em) rotate(-8deg); }
+    }
+    .ch:focus + .slider {
+      box-shadow: 0 0 1px #2196f3;
+    }
+    .ch:checked + .slider:before {
+      transform: translateX(2.2em);
+      background-color: green;
+      box-shadow: 0px 0px 40px 5px #72eb67;
+      border: 3px solid white;
+    }
+    .ch:checked + .slider::after {
+      content: "|";
       color: white;
+      position: absolute;
+      right: 0.3rem;
+      top: -3.3px;
+      transform: rotate(45deg);
+    }
+
+    /* Starfield adapted from Uiverse.io by jaykdoe. Each layer's shadow list is
+       stored once as a custom property and referenced by both the element and
+       its ::after copy, so the two halves of the loop cannot drift apart. */
+    :root {
+      --stars-1:
+        501px 811px #fbfaf7,
+        1450px 1324px #ff6ec7,
+        1093px 1780px #fbfaf7,
+        1469px 678px #b06cff,
+        904px 741px #fbfaf7,
+        1160px 781px #ffd166,
+        1841px 1962px #fbfaf7,
+        1630px 1667px #72eb67,
+        1788px 676px #fbfaf7,
+        367px 1734px #4cd9e8,
+        1343px 156px #fbfaf7,
+        1283px 1142px #ff8a3d,
+        1062px 378px #fbfaf7,
+        1395px 467px #ff6ec7,
+        1017px 1891px #fbfaf7,
+        137px 1114px #b06cff,
+        1767px 1403px #fbfaf7,
+        1543px 11px #ffd166,
+        1078px 181px #fbfaf7,
+        1189px 1574px #72eb67,
+        1697px 1551px #fbfaf7,
+        439px 472px #4cd9e8,
+        1491px 677px #fbfaf7,
+        1364px 599px #ff8a3d,
+        34px 382px #fbfaf7,
+        1221px 1584px #ff6ec7,
+        1266px 1499px #fbfaf7,
+        169px 1907px #b06cff,
+        1219px 1125px #fbfaf7,
+        659px 18px #ffd166,
+        1731px 1959px #fbfaf7,
+        332px 1216px #72eb67,
+        1913px 788px #fbfaf7,
+        80px 712px #4cd9e8,
+        326px 1605px #fbfaf7,
+        574px 1502px #ff8a3d,
+        473px 1653px #fbfaf7,
+        404px 975px #ff6ec7,
+        322px 1797px #fbfaf7,
+        425px 1321px #b06cff,
+        1121px 1797px #fbfaf7,
+        731px 647px #ffd166,
+        891px 1584px #fbfaf7,
+        1523px 109px #72eb67,
+        1379px 244px #fbfaf7,
+        865px 1064px #4cd9e8,
+        493px 956px #fbfaf7,
+        624px 1380px #ff8a3d,
+        440px 619px #fbfaf7,
+        1630px 767px #ff6ec7,
+        955px 1196px #fbfaf7,
+        62px 729px #b06cff,
+        126px 946px #fbfaf7,
+        1256px 896px #ffd166,
+        1444px 256px #fbfaf7,
+        661px 1628px #72eb67,
+        1078px 1716px #fbfaf7,
+        300px 737px #4cd9e8,
+        1734px 413px #fbfaf7,
+        1296px 129px #ff8a3d,
+        1771px 1678px #fbfaf7,
+        977px 1764px #ff6ec7,
+        1879px 549px #fbfaf7,
+        665px 1531px #b06cff,
+        89px 701px #fbfaf7,
+        1084px 1183px #ffd166,
+        1597px 1576px #fbfaf7,
+        1354px 1774px #72eb67,
+        554px 1471px #fbfaf7,
+        1469px 287px #4cd9e8,
+        887px 106px #fbfaf7,
+        1962px 766px #ff8a3d,
+        638px 805px #fbfaf7,
+        1651px 741px #ff6ec7,
+        1517px 1826px #fbfaf7,
+        24px 1152px #b06cff,
+        507px 558px #fbfaf7,
+        1262px 652px #ffd166,
+        246px 1048px #fbfaf7,
+        1077px 421px #72eb67,
+        1866px 1847px #fbfaf7,
+        1986px 1561px #4cd9e8,
+        704px 632px #fbfaf7,
+        1991px 1875px #ff8a3d,
+        1227px 395px #fbfaf7,
+        45px 1116px #ff6ec7,
+        247px 786px #fbfaf7,
+        890px 607px #b06cff,
+        787px 1235px #fbfaf7,
+        557px 524px #ffd166,
+        1582px 1285px #fbfaf7,
+        1725px 1366px #72eb67,
+        952px 747px #fbfaf7,
+        251px 458px #4cd9e8,
+        1500px 1250px #fbfaf7,
+        1999px 1734px #ff8a3d,
+        1336px 1955px #fbfaf7,
+        1705px 1464px #ff6ec7,
+        728px 697px #fbfaf7,
+        594px 510px #b06cff,
+        1345px 1990px #fbfaf7,
+        1919px 1803px #ffd166,
+        1117px 966px #fbfaf7,
+        1629px 97px #72eb67,
+        1046px 1196px #fbfaf7,
+        810px 1092px #4cd9e8,
+        722px 976px #fbfaf7,
+        406px 18px #ff8a3d,
+        1665px 1860px #fbfaf7,
+        1758px 1628px #ff6ec7,
+        1183px 463px #fbfaf7,
+        564px 239px #b06cff,
+        13px 1767px #fbfaf7,
+        1482px 1472px #ffd166,
+        1700px 347px #fbfaf7,
+        1362px 244px #72eb67,
+        1141px 1708px #fbfaf7,
+        22px 885px #4cd9e8,
+        374px 1309px #fbfaf7,
+        1034px 1037px #ff8a3d,
+        1725px 1086px #fbfaf7,
+        1343px 1921px #ff6ec7,
+        596px 903px #fbfaf7,
+        1061px 478px #b06cff,
+        18px 1409px #fbfaf7,
+        729px 1364px #ffd166,
+        264px 911px #fbfaf7,
+        677px 1442px #72eb67,
+        123px 33px #fbfaf7,
+        1303px 646px #4cd9e8,
+        1945px 792px #fbfaf7,
+        1305px 938px #ff8a3d,
+        918px 1536px #fbfaf7,
+        620px 948px #ff6ec7,
+        183px 646px #fbfaf7,
+        695px 687px #b06cff,
+        881px 272px #fbfaf7,
+        1521px 1212px #ffd166,
+        1423px 1022px #fbfaf7,
+        1545px 1271px #72eb67,
+        1393px 348px #fbfaf7,
+        685px 1910px #4cd9e8,
+        1446px 856px #fbfaf7,
+        73px 1201px #ff8a3d,
+        736px 999px #fbfaf7,
+        673px 796px #ff6ec7,
+        469px 850px #fbfaf7,
+        1912px 142px #b06cff,
+        1278px 664px #fbfaf7,
+        184px 1990px #ffd166,
+        1173px 1312px #fbfaf7,
+        782px 1879px #72eb67,
+        323px 1035px #fbfaf7,
+        611px 908px #4cd9e8,
+        565px 1449px #fbfaf7,
+        748px 1713px #ff8a3d,
+        1047px 490px #fbfaf7,
+        1040px 1872px #ff6ec7,
+        1818px 1659px #fbfaf7,
+        1806px 1327px #b06cff,
+        386px 575px #fbfaf7,
+        1550px 463px #ffd166,
+        148px 687px #fbfaf7,
+        651px 1683px #72eb67,
+        1588px 1194px #fbfaf7,
+        1831px 2px #4cd9e8,
+        581px 876px #fbfaf7,
+        1396px 1743px #ff8a3d,
+        1212px 1810px #fbfaf7,
+        421px 1920px #ff6ec7,
+        658px 1461px #fbfaf7,
+        1859px 1809px #b06cff,
+        1456px 388px #fbfaf7,
+        186px 1627px #ffd166,
+        1528px 1145px #fbfaf7,
+        171px 97px #72eb67,
+        674px 1072px #fbfaf7,
+        676px 1052px #4cd9e8,
+        1165px 1131px #fbfaf7,
+        1088px 781px #ff8a3d,
+        1231px 948px #fbfaf7,
+        330px 257px #ff6ec7,
+        426px 1046px #fbfaf7,
+        549px 652px #b06cff,
+        1338px 74px #fbfaf7,
+        1749px 364px #ffd166,
+        931px 369px #fbfaf7,
+        383px 1428px #72eb67,
+        1558px 389px #fbfaf7,
+        927px 133px #4cd9e8,
+        234px 1888px #fbfaf7,
+        1785px 1617px #ff8a3d,
+        556px 643px #fbfaf7,
+        401px 275px #ff6ec7,
+        406px 1644px #fbfaf7,
+        1253px 1852px #b06cff,
+        1599px 883px #fbfaf7,
+        744px 1721px #ffd166,
+        524px 1297px #fbfaf7,
+        1226px 1177px #72eb67,
+        1679px 55px #fbfaf7,
+        874px 1811px #4cd9e8,
+        838px 790px #fbfaf7,
+        1241px 430px #ff8a3d,
+        1676px 652px #fbfaf7,
+        1191px 568px #ff6ec7,
+        53px 1990px #fbfaf7,
+        1163px 237px #b06cff,
+        61px 223px #fbfaf7,
+        592px 456px #ffd166,
+        1844px 271px #fbfaf7,
+        1324px 1488px #72eb67,
+        1373px 717px #fbfaf7,
+        1822px 709px #4cd9e8,
+        1464px 941px #fbfaf7,
+        1445px 1118px #ff8a3d,
+        991px 1414px #fbfaf7,
+        1964px 1076px #ff6ec7,
+        108px 172px #fbfaf7,
+        641px 1722px #b06cff,
+        1539px 427px #fbfaf7,
+        1697px 45px #ffd166,
+        1301px 1353px #fbfaf7,
+        1060px 329px #72eb67,
+        967px 1396px #fbfaf7,
+        493px 301px #4cd9e8,
+        1228px 1406px #fbfaf7,
+        1211px 1653px #ff8a3d,
+        444px 1822px #fbfaf7,
+        1746px 353px #ff6ec7,
+        1449px 381px #fbfaf7,
+        671px 887px #b06cff,
+        650px 138px #fbfaf7,
+        30px 1839px #ffd166,
+        1094px 1405px #fbfaf7,
+        273px 796px #72eb67,
+        1618px 1964px #fbfaf7,
+        1045px 1849px #4cd9e8,
+        1472px 1155px #fbfaf7,
+        1529px 1312px #ff8a3d,
+        728px 448px #fbfaf7,
+        44px 1908px #ff6ec7,
+        691px 818px #fbfaf7,
+        254px 293px #b06cff,
+        1981px 1133px #fbfaf7,
+        1307px 375px #ffd166,
+        196px 316px #fbfaf7,
+        1241px 1975px #72eb67,
+        1138px 1706px #fbfaf7,
+        1769px 463px #4cd9e8,
+        1768px 1428px #fbfaf7,
+        1730px 590px #ff8a3d,
+        1780px 523px #fbfaf7,
+        1862px 1526px #ff6ec7,
+        1613px 909px #fbfaf7,
+        1266px 1781px #b06cff,
+        470px 352px #fbfaf7,
+        699px 1682px #ffd166,
+        1002px 614px #fbfaf7,
+        1209px 133px #72eb67,
+        1842px 518px #fbfaf7,
+        1422px 1836px #4cd9e8,
+        1720px 1901px #fbfaf7,
+        470px 1788px #ff8a3d,
+        1355px 1387px #fbfaf7,
+        146px 1162px #ff6ec7,
+        933px 80px #fbfaf7,
+        681px 1063px #b06cff,
+        313px 1341px #fbfaf7,
+        740px 1498px #ffd166,
+        168px 1014px #fbfaf7,
+        345px 1355px #72eb67,
+        1498px 1562px #fbfaf7,
+        1626px 1358px #4cd9e8,
+        890px 403px #fbfaf7,
+        663px 562px #ff8a3d,
+        1481px 168px #fbfaf7,
+        22px 719px #ff6ec7,
+        774px 1041px #fbfaf7,
+        1899px 829px #b06cff,
+        430px 158px #fbfaf7,
+        430px 361px #ffd166,
+        1592px 1334px #fbfaf7,
+        224px 323px #72eb67,
+        1639px 1131px #fbfaf7,
+        7px 271px #4cd9e8,
+        1646px 1514px #fbfaf7,
+        1605px 1444px #ff8a3d,
+        1820px 1665px #fbfaf7,
+        1549px 1641px #ff6ec7,
+        1609px 1377px #fbfaf7,
+        486px 1098px #b06cff,
+        229px 613px #fbfaf7,
+        542px 1694px #ffd166,
+        318px 256px #fbfaf7,
+        1861px 918px #72eb67,
+        889px 892px #fbfaf7,
+        442px 1524px #4cd9e8,
+        19px 422px #fbfaf7,
+        1935px 1908px #ff8a3d,
+        828px 109px #fbfaf7,
+        862px 1248px #ff6ec7,
+        1275px 560px #fbfaf7,
+        906px 63px #b06cff,
+        337px 1605px #fbfaf7,
+        1691px 918px #ffd166,
+        1414px 679px #fbfaf7,
+        1726px 749px #72eb67,
+        1540px 1149px #fbfaf7,
+        1337px 1466px #4cd9e8,
+        446px 430px #fbfaf7,
+        676px 1616px #ff8a3d,
+        840px 326px #fbfaf7,
+        976px 977px #ff6ec7,
+        1840px 642px #fbfaf7,
+        1273px 804px #b06cff,
+        1071px 928px #fbfaf7,
+        1292px 1675px #ffd166,
+        29px 1148px #fbfaf7,
+        1585px 135px #72eb67,
+        1007px 563px #fbfaf7,
+        1035px 78px #4cd9e8,
+        1174px 574px #fbfaf7,
+        120px 1304px #ff8a3d,
+        845px 1292px #fbfaf7,
+        861px 540px #ff6ec7,
+        234px 232px #fbfaf7,
+        1940px 1367px #b06cff,
+        759px 639px #fbfaf7,
+        1775px 1381px #ffd166,
+        906px 372px #fbfaf7,
+        1104px 1165px #72eb67,
+        1524px 911px #fbfaf7,
+        1882px 330px #4cd9e8,
+        1389px 700px #fbfaf7,
+        300px 1629px #ff8a3d,
+        220px 1614px #fbfaf7,
+        563px 140px #ff6ec7,
+        1611px 1586px #fbfaf7,
+        793px 1316px #b06cff,
+        325px 1070px #fbfaf7,
+        1722px 1462px #ffd166,
+        1406px 1120px #fbfaf7,
+        1169px 1768px #72eb67,
+        1956px 1053px #fbfaf7,
+        959px 1587px #4cd9e8,
+        585px 1566px #fbfaf7,
+        370px 204px #ff8a3d,
+        1606px 1416px #fbfaf7,
+        443px 1606px #ff6ec7,
+        1499px 1102px #fbfaf7,
+        1943px 105px #b06cff,
+        1121px 1594px #fbfaf7,
+        1512px 32px #ffd166,
+        871px 1425px #fbfaf7,
+        433px 100px #72eb67,
+        294px 1471px #fbfaf7,
+        1688px 1755px #4cd9e8,
+        1666px 591px #fbfaf7,
+        1034px 300px #ff8a3d,
+        734px 1178px #fbfaf7,
+        1342px 313px #ff6ec7,
+        1616px 1590px #fbfaf7,
+        1763px 1472px #b06cff,
+        632px 1935px #fbfaf7,
+        1708px 872px #ffd166,
+        1871px 915px #fbfaf7,
+        1829px 1020px #72eb67,
+        1599px 578px #fbfaf7,
+        42px 585px #4cd9e8,
+        1163px 1382px #fbfaf7,
+        1744px 1272px #ff8a3d,
+        984px 1426px #fbfaf7,
+        1786px 1584px #ff6ec7,
+        1813px 379px #fbfaf7,
+        1867px 1127px #b06cff,
+        97px 567px #fbfaf7,
+        626px 988px #ffd166,
+        1178px 79px #fbfaf7,
+        1703px 211px #72eb67,
+        961px 1785px #fbfaf7,
+        110px 975px #4cd9e8,
+        953px 1941px #fbfaf7,
+        1027px 1790px #ff8a3d,
+        1665px 107px #fbfaf7,
+        11px 964px #ff6ec7,
+        1718px 1147px #fbfaf7,
+        21px 1728px #b06cff,
+        1358px 1922px #fbfaf7,
+        872px 65px #ffd166,
+        1191px 1635px #fbfaf7,
+        762px 681px #72eb67,
+        1519px 1033px #fbfaf7,
+        906px 566px #4cd9e8,
+        1074px 657px #fbfaf7,
+        1093px 415px #ff8a3d,
+        51px 198px #fbfaf7,
+        1075px 1418px #ff6ec7,
+        1547px 1070px #fbfaf7,
+        225px 920px #b06cff,
+        850px 1974px #fbfaf7,
+        981px 595px #ffd166,
+        1425px 131px #fbfaf7,
+        460px 917px #72eb67,
+        56px 495px #fbfaf7,
+        714px 428px #4cd9e8,
+        920px 493px #fbfaf7,
+        470px 1521px #ff8a3d,
+        532px 821px #fbfaf7,
+        1905px 71px #ff6ec7,
+        883px 1501px #fbfaf7,
+        294px 196px #b06cff,
+        381px 1999px #fbfaf7,
+        332px 793px #ffd166,
+        1246px 408px #fbfaf7,
+        233px 149px #72eb67,
+        315px 231px #fbfaf7,
+        1594px 1302px #4cd9e8,
+        696px 1585px #fbfaf7,
+        791px 136px #ff8a3d,
+        479px 199px #fbfaf7,
+        1627px 1413px #ff6ec7,
+        1824px 924px #fbfaf7,
+        1631px 342px #b06cff,
+        1251px 1151px #fbfaf7,
+        284px 1781px #ffd166,
+        497px 1052px #fbfaf7,
+        204px 1161px #72eb67,
+        646px 1499px #fbfaf7,
+        1762px 558px #4cd9e8,
+        854px 1833px #fbfaf7,
+        883px 945px #ff8a3d,
+        44px 982px #fbfaf7,
+        1101px 834px #ff6ec7,
+        515px 1748px #fbfaf7,
+        1578px 1435px #b06cff,
+        819px 1258px #fbfaf7,
+        776px 670px #ffd166,
+        115px 385px #fbfaf7,
+        1478px 434px #72eb67,
+        885px 20px #fbfaf7,
+        192px 1513px #4cd9e8,
+        78px 1129px #fbfaf7,
+        1774px 1105px #ff8a3d,
+        955px 1149px #fbfaf7,
+        1817px 1929px #ff6ec7,
+        1106px 1832px #fbfaf7,
+        1107px 1997px #b06cff,
+        94px 23px #fbfaf7,
+        243px 982px #ffd166,
+        43px 1972px #fbfaf7,
+        1798px 673px #72eb67,
+        1131px 1589px #fbfaf7,
+        841px 14px #4cd9e8,
+        826px 345px #fbfaf7,
+        687px 56px #ff8a3d,
+        1084px 32px #fbfaf7,
+        1887px 1878px #ff6ec7,
+        153px 526px #fbfaf7,
+        1828px 253px #b06cff,
+        1947px 1105px #fbfaf7,
+        886px 700px #ffd166,
+        1307px 1723px #fbfaf7,
+        1274px 651px #72eb67,
+        1530px 837px #fbfaf7,
+        1699px 1637px #4cd9e8,
+        1703px 1331px #fbfaf7,
+        1929px 1557px #ff8a3d,
+        1763px 737px #fbfaf7,
+        1118px 1680px #ff6ec7,
+        1545px 692px #fbfaf7,
+        1462px 1092px #b06cff,
+        208px 1667px #fbfaf7,
+        1393px 859px #ffd166,
+        186px 1794px #fbfaf7,
+        351px 1199px #72eb67,
+        642px 1995px #fbfaf7,
+        1061px 1726px #4cd9e8,
+        1708px 115px #fbfaf7,
+        1233px 1305px #ff8a3d,
+        637px 1786px #fbfaf7,
+        1730px 603px #ff6ec7,
+        75px 1240px #fbfaf7,
+        1704px 1326px #b06cff,
+        584px 346px #fbfaf7,
+        438px 1554px #ffd166,
+        561px 513px #fbfaf7,
+        1382px 225px #72eb67,
+        467px 1674px #fbfaf7,
+        1403px 815px #4cd9e8,
+        1546px 1835px #fbfaf7,
+        127px 1119px #ff8a3d,
+        276px 591px #fbfaf7,
+        688px 1458px #ff6ec7,
+        765px 646px #fbfaf7,
+        474px 984px #b06cff,
+        171px 361px #fbfaf7,
+        94px 1480px #ffd166,
+        1962px 1666px #fbfaf7,
+        909px 1037px #72eb67,
+        1725px 222px #fbfaf7,
+        253px 1355px #4cd9e8,
+        1892px 1901px #fbfaf7,
+        275px 1847px #ff8a3d,
+        28px 1184px #fbfaf7,
+        1725px 1382px #ff6ec7,
+        882px 647px #fbfaf7,
+        1935px 1046px #b06cff,
+        10px 344px #fbfaf7,
+        292px 1328px #ffd166,
+        127px 1352px #fbfaf7,
+        752px 929px #72eb67,
+        1589px 384px #fbfaf7,
+        284px 1829px #4cd9e8,
+        381px 820px #fbfaf7,
+        1229px 1125px #ff8a3d,
+        777px 429px #fbfaf7,
+        1811px 1499px #ff6ec7,
+        1573px 287px #fbfaf7,
+        295px 756px #b06cff,
+        389px 616px #fbfaf7,
+        781px 41px #ffd166,
+        1092px 333px #fbfaf7,
+        794px 1588px #72eb67,
+        386px 1847px #fbfaf7,
+        1802px 710px #4cd9e8,
+        662px 60px #fbfaf7,
+        640px 264px #ff8a3d,
+        463px 746px #fbfaf7,
+        1859px 799px #ff6ec7,
+        763px 37px #fbfaf7,
+        639px 396px #b06cff,
+        357px 1071px #fbfaf7,
+        1190px 1430px #ffd166,
+        1814px 257px #fbfaf7,
+        1382px 235px #72eb67,
+        606px 1304px #fbfaf7,
+        1939px 1470px #4cd9e8,
+        1124px 349px #fbfaf7,
+        307px 1567px #ff8a3d,
+        310px 1323px #fbfaf7,
+        1145px 922px #ff6ec7,
+        1196px 1922px #fbfaf7,
+        1647px 544px #b06cff,
+        788px 1337px #fbfaf7,
+        257px 632px #ffd166,
+        1413px 414px #fbfaf7,
+        590px 620px #72eb67,
+        582px 794px #fbfaf7,
+        1702px 1481px #4cd9e8,
+        1055px 53px #fbfaf7,
+        157px 346px #ff8a3d,
+        50px 1901px #fbfaf7,
+        1038px 1369px #ff6ec7,
+        796px 1941px #fbfaf7,
+        215px 194px #b06cff,
+        1567px 1538px #fbfaf7,
+        367px 800px #ffd166,
+        1044px 489px #fbfaf7,
+        1109px 1712px #72eb67,
+        524px 327px #fbfaf7,
+        525px 1252px #4cd9e8,
+        1475px 1240px #fbfaf7,
+        529px 436px #ff8a3d,
+        795px 834px #fbfaf7,
+        122px 1371px #ff6ec7,
+        79px 482px #fbfaf7,
+        520px 1249px #b06cff,
+        336px 1878px #fbfaf7,
+        188px 944px #ffd166,
+        325px 1259px #fbfaf7,
+        1491px 1942px #72eb67,
+        620px 1054px #fbfaf7,
+        1606px 1153px #4cd9e8,
+        1448px 502px #fbfaf7,
+        53px 1381px #ff8a3d,
+        107px 1670px #fbfaf7,
+        1380px 618px #ff6ec7,
+        967px 1557px #fbfaf7,
+        1116px 1722px #b06cff,
+        1174px 1044px #fbfaf7,
+        1805px 717px #ffd166,
+        663px 394px #fbfaf7,
+        1848px 1007px #72eb67,
+        389px 802px #fbfaf7,
+        49px 392px #4cd9e8,
+        1650px 852px #fbfaf7,
+        1678px 1012px #ff8a3d,
+        335px 1009px #fbfaf7,
+        1818px 1631px #ff6ec7,
+        1568px 742px #fbfaf7,
+        1162px 1991px #b06cff,
+        52px 1190px #fbfaf7,
+        1401px 928px #ffd166,
+        119px 1549px #fbfaf7,
+        537px 1529px #72eb67,
+        2px 1709px #fbfaf7,
+        122px 387px #4cd9e8,
+        543px 2px #fbfaf7,
+        27px 1971px #ff8a3d,
+        507px 1377px #fbfaf7,
+        1362px 1080px #ff6ec7,
+        1031px 1544px #fbfaf7,
+        1631px 1174px #b06cff,
+        1603px 312px #fbfaf7,
+        1626px 1422px #ffd166,
+        1430px 615px #fbfaf7,
+        1958px 1431px #72eb67,
+        1946px 1412px #fbfaf7,
+        1848px 247px #4cd9e8,
+        984px 1808px #fbfaf7,
+        1396px 225px #ff8a3d,
+        319px 717px #fbfaf7,
+        1252px 875px #ff6ec7,
+        1619px 156px #fbfaf7,
+        951px 1971px #b06cff,
+        386px 355px #fbfaf7,
+        1406px 1151px #ffd166,
+        273px 1538px #fbfaf7,
+        844px 1570px #72eb67,
+        947px 151px #fbfaf7,
+        1363px 525px #4cd9e8,
+        209px 307px #fbfaf7,
+        1923px 1718px #ff8a3d,
+        993px 1741px #fbfaf7,
+        1513px 353px #ff6ec7,
+        1353px 61px #fbfaf7,
+        664px 352px #b06cff,
+        1382px 359px #fbfaf7,
+        1487px 1707px #ffd166,
+        657px 1045px #fbfaf7,
+        1107px 490px #72eb67,
+        1834px 1176px #fbfaf7,
+        837px 1438px #4cd9e8,
+        1947px 448px #fbfaf7,
+        1196px 333px #ff8a3d,
+        151px 555px #fbfaf7,
+        18px 992px #ff6ec7,
+        458px 748px #fbfaf7,
+        1801px 890px #b06cff,
+        1093px 1012px #fbfaf7,
+        315px 1101px #ffd166,
+        194px 323px #fbfaf7,
+        754px 292px #72eb67,
+        1737px 7px #fbfaf7,
+        40px 840px #4cd9e8,
+        1170px 805px #fbfaf7,
+        176px 1753px #ff8a3d,
+        805px 1148px #fbfaf7,
+        1578px 1271px #ff6ec7,
+        367px 1494px #fbfaf7,
+        363px 1111px #b06cff,
+        1955px 243px #fbfaf7,
+        1451px 1093px #ffd166,
+        375px 617px #fbfaf7,
+        1223px 720px #72eb67,
+        1178px 13px #fbfaf7,
+        1456px 865px #4cd9e8,
+        1440px 49px #fbfaf7,
+        186px 1569px #ff8a3d,
+        320px 1853px #fbfaf7,
+        300px 539px #ff6ec7,
+        1559px 509px #fbfaf7,
+        1985px 1108px #b06cff,
+        1588px 828px #fbfaf7,
+        525px 1432px #ffd166,
+        831px 363px #fbfaf7,
+        141px 281px #72eb67,
+        1319px 402px #fbfaf7,
+        40px 456px #4cd9e8,
+        1955px 478px #fbfaf7,
+        1758px 818px #ff8a3d,
+        1924px 688px #fbfaf7,
+        1030px 953px #ff6ec7,
+        1982px 210px #fbfaf7,
+        917px 1401px #b06cff,
+        1051px 1837px #fbfaf7,
+        1045px 463px #ffd166,
+        1744px 573px #fbfaf7,
+        529px 1530px #72eb67,
+        542px 469px #fbfaf7,
+        1982px 324px #4cd9e8,
+        1902px 1422px #fbfaf7,
+        1968px 782px #ff8a3d,
+        1666px 1561px #fbfaf7,
+        955px 304px #ff6ec7,
+        323px 778px #fbfaf7,
+        272px 443px #b06cff,
+        485px 581px #fbfaf7,
+        1353px 1058px #ffd166,
+        1257px 131px #fbfaf7,
+        434px 98px #72eb67,
+        1587px 1953px #fbfaf7,
+        1749px 68px #4cd9e8,
+        1984px 839px #fbfaf7,
+        1518px 183px #ff8a3d,
+        1071px 855px #fbfaf7,
+        1662px 1994px #ff6ec7,
+        1111px 106px #fbfaf7,
+        1954px 838px #b06cff;
+
+      --stars-2:
+        1925px 1320px #fbfaf7,
+        693px 1778px #ff6ec7,
+        1016px 711px #fbfaf7,
+        1171px 563px #b06cff,
+        661px 1919px #fbfaf7,
+        1610px 44px #ffd166,
+        1275px 140px #fbfaf7,
+        1208px 1802px #72eb67,
+        1473px 1587px #fbfaf7,
+        11px 1117px #4cd9e8,
+        853px 1757px #fbfaf7,
+        1149px 937px #ff8a3d,
+        1353px 428px #fbfaf7,
+        270px 279px #ff6ec7,
+        258px 1404px #fbfaf7,
+        417px 1188px #b06cff,
+        286px 561px #fbfaf7,
+        393px 1765px #ffd166,
+        147px 881px #fbfaf7,
+        666px 1097px #72eb67,
+        1425px 1278px #fbfaf7,
+        806px 156px #4cd9e8,
+        1252px 561px #fbfaf7,
+        218px 52px #ff8a3d,
+        1371px 1980px #fbfaf7,
+        171px 745px #ff6ec7,
+        1424px 89px #fbfaf7,
+        137px 244px #b06cff,
+        939px 1922px #fbfaf7,
+        137px 1080px #ffd166,
+        1757px 50px #fbfaf7,
+        904px 536px #72eb67,
+        1938px 1001px #fbfaf7,
+        1172px 440px #4cd9e8,
+        72px 1475px #fbfaf7,
+        102px 121px #ff8a3d,
+        804px 1671px #fbfaf7,
+        1314px 270px #ff6ec7,
+        440px 1341px #fbfaf7,
+        1216px 511px #b06cff,
+        1061px 1523px #fbfaf7,
+        97px 274px #ffd166,
+        704px 1318px #fbfaf7,
+        52px 1872px #72eb67,
+        1962px 296px #fbfaf7,
+        111px 289px #4cd9e8,
+        1157px 1236px #fbfaf7,
+        1347px 1451px #ff8a3d,
+        820px 286px #fbfaf7,
+        1389px 1169px #ff6ec7,
+        644px 841px #fbfaf7,
+        1286px 522px #b06cff,
+        955px 659px #fbfaf7,
+        428px 1805px #ffd166,
+        237px 557px #fbfaf7,
+        1689px 1058px #72eb67,
+        636px 1882px #fbfaf7,
+        1349px 1664px #4cd9e8,
+        1548px 432px #fbfaf7,
+        1841px 504px #ff8a3d,
+        302px 252px #fbfaf7,
+        827px 1765px #ff6ec7,
+        620px 123px #fbfaf7,
+        207px 748px #b06cff,
+        1454px 1234px #fbfaf7,
+        1967px 1790px #ffd166,
+        542px 33px #fbfaf7,
+        742px 1214px #72eb67,
+        255px 1402px #fbfaf7,
+        74px 1772px #4cd9e8,
+        699px 475px #fbfaf7,
+        980px 1253px #ff8a3d,
+        534px 1676px #fbfaf7,
+        909px 202px #ff6ec7,
+        1498px 1251px #fbfaf7,
+        1796px 120px #b06cff,
+        1409px 1263px #fbfaf7,
+        1627px 995px #ffd166,
+        969px 710px #fbfaf7,
+        1674px 676px #72eb67,
+        1832px 759px #fbfaf7,
+        1623px 563px #4cd9e8,
+        251px 1790px #fbfaf7,
+        96px 1688px #ff8a3d,
+        886px 239px #fbfaf7,
+        778px 150px #ff6ec7,
+        1767px 430px #fbfaf7,
+        765px 1259px #b06cff,
+        1189px 877px #fbfaf7,
+        444px 1629px #ffd166,
+        1560px 324px #fbfaf7,
+        1952px 1097px #72eb67,
+        712px 1173px #fbfaf7,
+        541px 911px #4cd9e8,
+        827px 1420px #fbfaf7,
+        1233px 285px #ff8a3d,
+        784px 546px #fbfaf7,
+        645px 285px #ff6ec7,
+        1273px 1255px #fbfaf7,
+        1821px 174px #b06cff,
+        221px 1795px #fbfaf7,
+        1004px 456px #ffd166,
+        1298px 941px #fbfaf7,
+        274px 387px #72eb67,
+        174px 376px #fbfaf7,
+        1491px 258px #4cd9e8,
+        1489px 1946px #fbfaf7,
+        1134px 1382px #ff8a3d,
+        1289px 1145px #fbfaf7,
+        464px 358px #ff6ec7,
+        1249px 1842px #fbfaf7,
+        1665px 831px #b06cff,
+        1982px 84px #fbfaf7,
+        541px 774px #ffd166,
+        1994px 523px #fbfaf7,
+        762px 1644px #72eb67,
+        1730px 867px #fbfaf7,
+        1951px 1287px #4cd9e8,
+        911px 1691px #fbfaf7,
+        1454px 725px #ff8a3d,
+        1287px 1940px #fbfaf7,
+        70px 564px #ff6ec7,
+        1980px 638px #fbfaf7,
+        1674px 1774px #b06cff,
+        1720px 116px #fbfaf7,
+        1747px 182px #ffd166,
+        1040px 450px #fbfaf7,
+        1795px 375px #72eb67,
+        857px 1471px #fbfaf7,
+        1326px 1730px #4cd9e8,
+        915px 274px #fbfaf7,
+        1224px 358px #ff8a3d,
+        1808px 60px #fbfaf7,
+        43px 1870px #ff6ec7,
+        1810px 1536px #fbfaf7,
+        1564px 1719px #b06cff,
+        731px 1388px #fbfaf7,
+        1953px 1967px #ffd166,
+        1744px 1119px #fbfaf7,
+        794px 1384px #72eb67,
+        959px 714px #fbfaf7,
+        18px 1932px #4cd9e8,
+        1358px 1437px #fbfaf7,
+        355px 939px #ff8a3d,
+        1355px 1648px #fbfaf7,
+        608px 719px #ff6ec7,
+        383px 758px #fbfaf7,
+        1164px 1681px #b06cff,
+        1045px 253px #fbfaf7,
+        424px 1279px #ffd166,
+        1899px 359px #fbfaf7,
+        379px 488px #72eb67,
+        214px 465px #fbfaf7,
+        179px 905px #4cd9e8,
+        830px 1993px #fbfaf7,
+        448px 1077px #ff8a3d,
+        1880px 1354px #fbfaf7,
+        1973px 347px #ff6ec7,
+        745px 1025px #fbfaf7,
+        788px 1007px #b06cff,
+        1377px 883px #fbfaf7,
+        6px 290px #ffd166,
+        1312px 407px #fbfaf7,
+        1398px 622px #72eb67,
+        1405px 339px #fbfaf7,
+        1198px 1709px #4cd9e8,
+        988px 1226px #fbfaf7,
+        87px 1459px #ff8a3d,
+        1113px 1698px #fbfaf7,
+        997px 732px #ff6ec7,
+        708px 331px #fbfaf7,
+        1876px 1112px #b06cff,
+        1729px 1797px #fbfaf7,
+        719px 703px #ffd166,
+        1295px 522px #fbfaf7,
+        758px 1061px #72eb67,
+        1309px 1014px #fbfaf7,
+        1327px 1365px #4cd9e8,
+        854px 1317px #fbfaf7,
+        531px 1001px #ff8a3d,
+        1751px 1040px #fbfaf7,
+        1354px 190px #ff6ec7,
+        800px 1538px #fbfaf7,
+        88px 1455px #b06cff,
+        668px 39px #fbfaf7,
+        1379px 41px #ffd166,
+        892px 524px #fbfaf7,
+        54px 649px #72eb67,
+        1289px 730px #fbfaf7,
+        727px 488px #4cd9e8,
+        181px 842px #fbfaf7,
+        1230px 64px #ff8a3d,
+        3px 857px #fbfaf7,
+        292px 1201px #ff6ec7,
+        1343px 673px #fbfaf7,
+        1096px 1412px #b06cff,
+        1520px 292px #fbfaf7,
+        104px 1683px #ffd166,
+        934px 1387px #fbfaf7,
+        314px 739px #72eb67;
+
+      --stars-3:
+        200px 981px #fbfaf7,
+        1731px 521px #ff6ec7,
+        132px 1039px #fbfaf7,
+        1888px 1547px #b06cff,
+        899px 1226px #fbfaf7,
+        1887px 580px #ffd166,
+        1548px 1092px #fbfaf7,
+        1626px 689px #72eb67,
+        254px 1072px #fbfaf7,
+        1684px 1211px #4cd9e8,
+        672px 1267px #fbfaf7,
+        939px 668px #ff8a3d,
+        1969px 645px #fbfaf7,
+        1126px 983px #ff6ec7,
+        457px 568px #fbfaf7,
+        476px 876px #b06cff,
+        829px 1896px #fbfaf7,
+        1364px 1846px #ffd166,
+        1507px 1120px #fbfaf7,
+        936px 1948px #72eb67,
+        1833px 832px #fbfaf7,
+        1424px 285px #4cd9e8,
+        1377px 1596px #fbfaf7,
+        432px 153px #ff8a3d,
+        1348px 1410px #fbfaf7,
+        1529px 954px #ff6ec7,
+        1102px 387px #fbfaf7,
+        264px 297px #b06cff,
+        811px 977px #fbfaf7,
+        1931px 673px #ffd166,
+        1734px 978px #fbfaf7,
+        1772px 1567px #72eb67,
+        1197px 1400px #fbfaf7,
+        764px 282px #4cd9e8,
+        1103px 822px #fbfaf7,
+        872px 1803px #ff8a3d,
+        1057px 1763px #fbfaf7,
+        52px 1299px #ff6ec7,
+        1312px 1236px #fbfaf7,
+        235px 1082px #b06cff,
+        299px 1086px #fbfaf7,
+        1017px 1602px #ffd166,
+        1950px 626px #fbfaf7,
+        1306px 132px #72eb67,
+        1358px 1618px #fbfaf7,
+        1873px 1718px #4cd9e8,
+        1447px 940px #fbfaf7,
+        1888px 1195px #ff8a3d,
+        1704px 1765px #fbfaf7,
+        872px 1357px #ff6ec7,
+        1555px 1120px #fbfaf7,
+        250px 1415px #b06cff,
+        450px 415px #fbfaf7,
+        492px 901px #ffd166,
+        170px 1641px #fbfaf7,
+        56px 1129px #72eb67,
+        627px 1514px #fbfaf7,
+        1221px 500px #4cd9e8,
+        324px 1895px #fbfaf7,
+        1397px 1775px #ff8a3d,
+        1966px 598px #fbfaf7,
+        1550px 763px #ff6ec7,
+        326px 1605px #fbfaf7,
+        261px 969px #b06cff,
+        890px 281px #fbfaf7,
+        736px 544px #ffd166,
+        589px 1262px #fbfaf7,
+        1581px 368px #72eb67,
+        1900px 1132px #fbfaf7,
+        1914px 585px #4cd9e8,
+        1864px 1517px #fbfaf7,
+        241px 217px #ff8a3d,
+        859px 787px #fbfaf7,
+        996px 1729px #ff6ec7,
+        741px 121px #fbfaf7,
+        418px 414px #b06cff,
+        142px 967px #fbfaf7,
+        387px 896px #ffd166,
+        703px 562px #fbfaf7,
+        968px 1136px #72eb67,
+        1682px 332px #fbfaf7,
+        1287px 846px #4cd9e8,
+        256px 1427px #fbfaf7,
+        1885px 432px #ff8a3d,
+        1739px 1458px #fbfaf7,
+        345px 1769px #ff6ec7,
+        1140px 1612px #fbfaf7,
+        192px 1921px #b06cff,
+        920px 471px #fbfaf7,
+        834px 881px #ffd166,
+        917px 1803px #fbfaf7,
+        466px 1266px #72eb67,
+        483px 1108px #fbfaf7,
+        689px 986px #4cd9e8,
+        1279px 786px #fbfaf7,
+        458px 910px #ff8a3d,
+        1250px 870px #fbfaf7,
+        785px 1654px #ff6ec7,
+        1543px 1757px #fbfaf7,
+        287px 1272px #b06cff;
+    }
+
+    /* The stars sit behind the band's content and never affect layout. */
+    #stars, #stars2, #stars3 {
+      position: absolute;
+      top: 0; left: 0;
+      background: transparent;
+      pointer-events: none;
+    }
+    /* Round rather than square, and tinted from the page's paper palette so
+       they read as warm motes rather than clinical white pixels. */
+    #stars, #stars2, #stars3,
+    #stars::after, #stars2::after, #stars3::after,
+    #hstars, #hstars2, #hstars3,
+    #hstars::after, #hstars2::after, #hstars3::after { border-radius: 50%; }
+    #stars  { width: 1px; height: 1px; box-shadow: var(--stars-1); animation: animStar 50s  linear infinite; }
+    #stars2 { width: 2px; height: 2px; box-shadow: var(--stars-2); animation: animStar 100s linear infinite; }
+    #stars3 { width: 3px; height: 3px; box-shadow: var(--stars-3); animation: animStar 150s linear infinite; }
+
+    #stars::after, #stars2::after, #stars3::after {
+      content: " ";
+      position: absolute;
+      top: 2000px;
+      background: transparent;
+    }
+    #stars::after  { width: 1px; height: 1px; box-shadow: var(--stars-1); }
+    #stars2::after { width: 2px; height: 2px; box-shadow: var(--stars-2); }
+    #stars3::after { width: 3px; height: 3px; box-shadow: var(--stars-3); }
+
+    @keyframes animStar {
+      from { transform: translateY(0); }
+      to   { transform: translateY(-2000px); }
+    }
+
+    .band-inner { position: relative; z-index: 1; }
+
+    /* ---- Neon checkbox, from Uiverse.io by 00Kubi ---- */
+    .neon-checkbox {
+      /* Matched to the toggle's green so the band has one accent, not two. */
+      --primary: #72eb67;
+      --primary-dark: #4cc142;
+      --primary-light: #a9f0a2;
+      --size: 26px;
+      position: relative;
+      flex: none;
+      width: var(--size);
+      height: var(--size);
+      margin: 0;
       cursor: pointer;
-      font-size: 1rem;
-      padding: 0.75rem 1.5rem;
-      transition: background-color 0.2s;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .btn:hover {
-      background-color: darkred;
+    /* Deviation from the original, which used `display: none`. A required
+       control that is display:none is unfocusable, which both breaks keyboard
+       use and makes the browser refuse to submit the form outright. */
+    .neon-checkbox input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
     }
 
-    details {
-      background: #f8f9fa;
+    .neon-checkbox__frame { position: relative; width: 100%; height: 100%; pointer-events: none; }
+
+    .neon-checkbox__box {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
       border-radius: 4px;
-      padding: 1rem;
-      margin-bottom: 1rem;
+      border: 2px solid var(--primary-dark);
+      transition: all 0.4s ease;
     }
 
-    summary {
-      cursor: pointer;
-      font-weight: 500;
-    }
-
-    summary:hover {
-      color: red;
-    }
-
-    .form-check-inline {
-      margin-right: 1.5rem;
-    }
-
-    .section-header {
+    .neon-checkbox__check-container {
+      position: absolute;
+      inset: 2px;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
+      justify-content: center;
     }
 
-    .section-header i {
-      color: red;
+    .neon-checkbox__check {
+      width: 80%;
+      height: 80%;
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 40;
+      stroke-dashoffset: 40;
+      transform-origin: center;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .info-text {
+    .neon-checkbox__glow {
+      position: absolute;
+      inset: -2px;
+      border-radius: 6px;
+      background: var(--primary);
+      opacity: 0;
+      filter: blur(8px);
+      transform: scale(1.2);
+      transition: all 0.4s ease;
+    }
+
+    .neon-checkbox__borders {
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .neon-checkbox__borders span {
+      position: absolute;
+      width: 40px;
+      height: 1px;
+      background: var(--primary);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .neon-checkbox__borders span:nth-child(1) { top: 0; left: -100%; animation: borderFlow1 2s linear infinite; }
+    .neon-checkbox__borders span:nth-child(2) { top: -100%; right: 0; width: 1px; height: 40px; animation: borderFlow2 2s linear infinite; }
+    .neon-checkbox__borders span:nth-child(3) { bottom: 0; right: -100%; animation: borderFlow3 2s linear infinite; }
+    .neon-checkbox__borders span:nth-child(4) { bottom: -100%; left: 0; width: 1px; height: 40px; animation: borderFlow4 2s linear infinite; }
+
+    .neon-checkbox__particles span {
+      position: absolute;
+      width: 4px; height: 4px;
+      background: var(--pc, var(--primary));
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+      top: 50%; left: 50%;
+      box-shadow: 0 0 6px var(--pc, var(--primary));
+    }
+
+    .neon-checkbox__rings { position: absolute; inset: -20px; pointer-events: none; }
+    .neon-checkbox__rings .ring {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 1px solid var(--primary);
+      opacity: 0;
+      transform: scale(0);
+    }
+
+    .neon-checkbox__sparks span {
+      position: absolute;
+      width: 20px; height: 1px;
+      background: linear-gradient(90deg, var(--primary), transparent);
+      opacity: 0;
+    }
+
+    .neon-checkbox:hover .neon-checkbox__box { border-color: var(--primary); transform: scale(1.05); }
+
+    .neon-checkbox input:focus-visible ~ .neon-checkbox__frame .neon-checkbox__box {
+      outline: 2px solid #fff;
+      outline-offset: 3px;
+    }
+
+    .neon-checkbox input:checked ~ .neon-checkbox__frame .neon-checkbox__box {
+      border-color: var(--primary);
+      background: rgba(114, 235, 103, 0.12);
+    }
+    .neon-checkbox input:checked ~ .neon-checkbox__frame .neon-checkbox__check {
+      stroke-dashoffset: 0;
+      transform: scale(1.1);
+    }
+    .neon-checkbox input:checked ~ .neon-checkbox__frame .neon-checkbox__glow { opacity: 0.2; }
+    .neon-checkbox input:checked ~ .neon-checkbox__frame .neon-checkbox__borders span { opacity: 1; }
+    .neon-checkbox input:checked ~ .neon-checkbox__frame .neon-checkbox__particles span { animation: particleExplosion 0.6s ease-out forwards; }
+    .neon-checkbox input:checked ~ .neon-checkbox__frame .neon-checkbox__rings .ring { animation: ringPulse 0.6s ease-out forwards; }
+    .neon-checkbox input:checked ~ .neon-checkbox__frame .neon-checkbox__sparks span { animation: sparkFlash 0.6s ease-out forwards; }
+
+    @keyframes borderFlow1 { 0% { transform: translateX(0); } 100% { transform: translateX(200%); } }
+    @keyframes borderFlow2 { 0% { transform: translateY(0); } 100% { transform: translateY(200%); } }
+    @keyframes borderFlow3 { 0% { transform: translateX(0); } 100% { transform: translateX(-200%); } }
+    @keyframes borderFlow4 { 0% { transform: translateY(0); } 100% { transform: translateY(-200%); } }
+
+    @keyframes particleExplosion {
+      0%   { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+      20%  { opacity: 1; }
+      100% { transform: translate(calc(-50% + var(--x, 20px)), calc(-50% + var(--y, 20px))) scale(0); opacity: 0; }
+    }
+    @keyframes ringPulse {
+      0%   { transform: scale(0); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+    @keyframes sparkFlash {
+      0%   { transform: rotate(var(--r, 0deg)) translateX(0) scale(1); opacity: 1; }
+      100% { transform: rotate(var(--r, 0deg)) translateX(30px) scale(0); opacity: 0; }
+    }
+
+    .neon-checkbox__particles span:nth-child(1)  { --x: 25px;  --y: -25px; --pc: #ff6ec7; }
+    .neon-checkbox__particles span:nth-child(2)  { --x: -25px; --y: -25px; --pc: #b06cff; }
+    .neon-checkbox__particles span:nth-child(3)  { --x: 25px;  --y: 25px; --pc: #ffd166; }
+    .neon-checkbox__particles span:nth-child(4)  { --x: -25px; --y: 25px; --pc: #72eb67; }
+    .neon-checkbox__particles span:nth-child(5)  { --x: 35px;  --y: 0px; --pc: #ff6ec7; }
+    .neon-checkbox__particles span:nth-child(6)  { --x: -35px; --y: 0px; --pc: #b06cff; }
+    .neon-checkbox__particles span:nth-child(7)  { --x: 0px;   --y: 35px; --pc: #ffd166; }
+    .neon-checkbox__particles span:nth-child(8)  { --x: 0px;   --y: -35px; --pc: #72eb67; }
+    .neon-checkbox__particles span:nth-child(9)  { --x: 20px;  --y: -30px; --pc: #ff6ec7; }
+    .neon-checkbox__particles span:nth-child(10) { --x: -20px; --y: 30px; --pc: #b06cff; }
+    .neon-checkbox__particles span:nth-child(11) { --x: 30px;  --y: 20px; --pc: #ffd166; }
+    .neon-checkbox__particles span:nth-child(12) { --x: -30px; --y: -20px; --pc: #72eb67; }
+
+    .neon-checkbox__sparks span:nth-child(1) { --r: 0deg;   top: 50%; left: 50%; }
+    .neon-checkbox__sparks span:nth-child(2) { --r: 90deg;  top: 50%; left: 50%; }
+    .neon-checkbox__sparks span:nth-child(3) { --r: 180deg; top: 50%; left: 50%; }
+    .neon-checkbox__sparks span:nth-child(4) { --r: 270deg; top: 50%; left: 50%; }
+
+    .neon-checkbox__rings .ring:nth-child(1) { animation-delay: 0s; }
+    .neon-checkbox__rings .ring:nth-child(2) { animation-delay: 0.1s; }
+    .neon-checkbox__rings .ring:nth-child(3) { animation-delay: 0.2s; }
+
+    /* Gate rows now hold the box and its text side by side. */
+    .gate-row {
+      display: flex; align-items: center; gap: .85rem;
+      margin-bottom: 1rem; text-align: left;
+      max-width: 34rem; margin-left: auto; margin-right: auto;
+    }
+    .gate-row:last-of-type { margin-bottom: 0; }
+    .gate-text {
+      display: block;
+      margin: 0; font-size: .9rem; letter-spacing: 0; line-height: 1.5;
+      color: rgba(255,255,255,.92); cursor: pointer;
+    }
+    /* Keep the chip on the same line as its surrounding words. */
+    .gate-text code { white-space: nowrap; }
+
+    /* Revealed when the runtime box is ticked. Animating grid-template-rows
+       from 0fr to 1fr gives a true height transition without measuring. */
+    .gate-hint {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: 0;
+      margin-left: calc(26px + .85rem);
+      transition: grid-template-rows .4s cubic-bezier(.22,.61,.36,1),
+                  opacity .3s ease,
+                  margin-top .4s cubic-bezier(.22,.61,.36,1);
+    }
+    .gate-hint.show { grid-template-rows: 1fr; opacity: 1; margin-top: .7rem; }
+    .gate-hint > p {
+      overflow: hidden;
+      margin: 0;
+      padding-left: .9rem;
+      border-left: 2px solid #72eb67;
+      text-align: left;
+      font-family: var(--serif);
+      font-size: .88rem;
+      font-style: italic;
+      line-height: 1.5;
+      color: rgba(255,255,255,.72);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .gate-hint { transition: none; }
+    }
+
+    /* ---- Hero band ---- */
+    /* Dimmer than the runtime band on purpose: the mark is drawn red on
+       transparent for light grounds, so a bright red field swallows it. */
+    .hero-band {
+      position: relative;
+      left: 50%; right: 50%;
+      margin-left: -50vw; margin-right: -50vw;
+      width: 100vw;
+      margin-top: -1.5rem;
+      margin-bottom: 3rem;
+      padding: 1.5rem 1.5rem 1.25rem;
+      background: #091926;
+      opacity: .9;
+      overflow: hidden;
+      border: 0;
+    }
+    .hero-inner { position: relative; z-index: 1; max-width: 44rem; margin: 0 auto; }
+    /* Sits a little left of centre. Offset via margin rather than transform,
+       because .rise animates transform and would cancel it out. */
+    .hero-band .mark { width: 85%; max-width: 85%; margin: 0 auto 0 0; }
+
+    #hstars, #hstars2, #hstars3 {
+      position: absolute; top: 0; left: 0;
+      background: transparent; pointer-events: none;
+    }
+    #hstars  { width: 2px; height: 2px; box-shadow: var(--stars-1); animation: animStar 50s  linear infinite; }
+    #hstars2 { width: 3px; height: 3px; box-shadow: var(--stars-2); animation: animStar 100s linear infinite; }
+    #hstars3 { width: 5px; height: 5px; box-shadow: var(--stars-3); animation: animStar 150s linear infinite; }
+    #hstars::after, #hstars2::after, #hstars3::after {
+      content: " "; position: absolute; top: 2000px; background: transparent;
+    }
+    #hstars::after  { width: 2px; height: 2px; box-shadow: var(--stars-1); }
+    #hstars2::after { width: 3px; height: 3px; box-shadow: var(--stars-2); }
+    #hstars3::after { width: 5px; height: 5px; box-shadow: var(--stars-3); }
+
+    /* Full bleed band. Breaks out of the centred column to span the viewport. */
+    .runtime-band {
+      position: relative;
+      left: 50%; right: 50%;
+      margin-left: -50vw; margin-right: -50vw;
+      width: 100vw;
+      padding: 3.25rem 1.5rem;
+      background: #091926;
+      opacity: .9;
+      overflow: hidden;
       text-align: center;
-      line-height: 1.6;
+      border: 0;
+      margin-top: 3.5rem; margin-bottom: 2.5rem;
+    }
+    .band-label {
+      margin: 0 0 3rem; padding: 0;
+      font-family: var(--serif);
+      font-size: clamp(1.25rem, 2.6vw, 1.6rem);
+      letter-spacing: .12em; text-transform: uppercase;
+      color: rgba(255,255,255,.92);
+    }
+    .runtime-band .switch { margin: 0 auto; }
+
+    .toggle-state {
+      margin: 1.5rem auto 0;
+      max-width: 30rem;
+      font-size: .95rem;
+      color: rgba(255,255,255,.85);
+      transition: color .3s ease;
+    }
+    .toggle-state.on { color: #a9f0a2; }
+
+    /* Terrarium confirmation, revealed only when a runtime is required. */
+    .terrarium {
+      max-width: 34rem;
+      margin: 1.75rem auto 0;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255,255,255,.12);
+      display: none;
+    }
+    .terrarium.show { display: block; }
+    /* Deliberately no `.terrarium label` rule: it would also catch .gate-text
+       and .neon-checkbox, and a flex label breaks its own text into items. */
+    .terrarium input[type="checkbox"] {
+      flex: none; width: 1.05rem; height: 1.05rem; margin-top: .15rem;
+      accent-color: var(--accent); cursor: pointer;
+    }
+    .terrarium label:last-of-type { margin-bottom: 0; }
+    .terrarium code {
+      background: rgba(255,255,255,.16);
+      padding: 0 .3rem; border-radius: 3px;
+      font-family: var(--mono); font-size: .85em;
+    }
+    .terrarium a {
+      color: #fff;
+      background-image: linear-gradient(#fff, #fff);
+      background-size: 100% 1px;
+    }
+    .terrarium a:hover { color: #ffd9da; background-image: linear-gradient(#ffd9da, #ffd9da); }
+
+    .gate-note {
+      margin: .9rem auto 0; max-width: 34rem;
+      font-size: .82rem; color: rgba(255,255,255,.75);
     }
 
-    a {
-      color: red;
-      text-decoration: none;
+    .actions { margin-top: 2.5rem; text-align: center; }
+    /* Button adapted from Uiverse.io by MuhammadHasann, recoloured to the
+       NeuroLibre reds. Scoped to .btn so it cannot leak onto other buttons. */
+    .btn {
+      position: relative;
+      display: inline-block;
+      padding: 21px 64px;
+      background: var(--accent);
+      font-family: var(--sans);
+      font-size: 20px;
+      font-weight: 500;
+      color: #fff;
+      cursor: pointer;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.2));
+      overflow: visible;
     }
 
-    a:hover {
-      text-decoration: underline;
+    .btn:not([disabled]):hover {
+      border: 1px solid var(--accent-lift);
+      background: linear-gradient(85deg, #c1272d, #cb2f35, #d8383e, #c62a30, #b32128);
+      background-size: 200% 200%;
+      animation: wind 2s ease-in-out infinite;
     }
+
+    @keyframes wind {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* The sprigs. Their paths carry no fill, so it is set here. */
+    .btn .icon-1 .fil0, .btn .icon-2 .fil0, .btn .icon-3 .fil0 { fill: #000; }
+
+    .btn .icon-1 {
+      position: absolute;
+      top: 0; right: 0;
+      width: 32px;
+      transform-origin: 0 0;
+      transform: rotate(10deg);
+      transition: all 0.5s ease-in-out;
+      filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.3));
+    }
+    .btn:not([disabled]):hover .icon-1 {
+      animation: slay-1 3s cubic-bezier(0.52, 0, 0.58, 1) infinite;
+      transform: rotate(10deg);
+    }
+    @keyframes slay-1 {
+      0%   { transform: rotate(10deg); }
+      50%  { transform: rotate(-5deg); }
+      100% { transform: rotate(10deg); }
+    }
+
+    .btn .icon-2 {
+      position: absolute;
+      top: 0; left: 32px;
+      width: 15px;
+      transform-origin: 50% 0;
+      transform: rotate(10deg);
+      transition: all 1s ease-in-out;
+      filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.5));
+    }
+    .btn:not([disabled]):hover .icon-2 {
+      animation: slay-2 3s cubic-bezier(0.52, 0, 0.58, 1) 1s infinite;
+      transform: rotate(0);
+    }
+    @keyframes slay-2 {
+      0%   { transform: rotate(0deg); }
+      50%  { transform: rotate(15deg); }
+      100% { transform: rotate(0); }
+    }
+
+    .btn .icon-3 {
+      position: absolute;
+      top: 0; left: 0;
+      width: 23px;
+      transform-origin: 50% 0;
+      transform: rotate(-5deg);
+      transition: all 1s ease-in-out;
+      filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.5));
+    }
+    .btn:not([disabled]):hover .icon-3 {
+      animation: slay-3 2s cubic-bezier(0.52, 0, 0.58, 1) 1s infinite;
+      transform: rotate(0);
+    }
+    @keyframes slay-3 {
+      0%   { transform: rotate(0deg); }
+      50%  { transform: rotate(-5deg); }
+      100% { transform: rotate(0); }
+    }
+
+    /* Disabled: flat, no sprigs, no motion. */
+    .btn[disabled] {
+      background: #ded9d2;
+      border-color: #ded9d2;
+      color: #fffdfa;
+      cursor: not-allowed;
+      filter: none;
+    }
+    .btn[disabled] .icon-1,
+    .btn[disabled] .icon-2,
+    .btn[disabled] .icon-3 { opacity: .25; filter: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn, .btn .icon-1, .btn .icon-2, .btn .icon-3 { animation: none !important; }
+    }
+
+    footer { margin-top: 4rem; text-align: center; font-size: .85rem; color: var(--muted); }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="row justify-content-lg-center">
-      <div class="col-lg-8">
-        <div class="card">
-          <div class="logo-container text-center">
-            <img src="https://github.com/neurolibre/brand/blob/main/png/preview_magn.png?raw=true" alt="NeuroLibre Logo">
-          </div>
+  <main class="page">
 
-          <hr>
-          
-          <div class="info-text">
-            <h5>
-              Structured your GitHub repository according to <a href="https://docs.neurolibre.org/en/latest/STRUCTURE.html" target="_blank">NeuroLibre guidelines</a>? If not, visit our <a href="https://evidencepub.io/templates" target="_blank">template gallery</a> for pre-structured examples.<br>
-              <a href="https://github.com/neurolibre/info/issues/new?assignees=agahkarakuzu&labels=DOWNLOAD&projects=&template=data_cache.md&title=" target="_blank">Opened an issue</a> for us to cache your data (if applicable)?<br>
-              Successfully built a <a href="https://terrarium.evidencepub.io" target="_blank">terrarium</a> for your repository (if executable)?<br>
-              Now you can try building your living preprint here!
-            </h5>
-          </div>
-
-          <hr>
-
-          <div class="section-header">
-            <i class="fas fa-bolt"></i>
-            <b>Does your preprint contain executable content?</b>
-          </div>
-
-          <details>
-            <summary>Toggle for instructions</summary>
-            <p>Select whether your preprint includes code that needs to be executed (like Python notebooks, R scripts, etc.).</p>
-            <ul>
-              <li>Select <b>Yes</b> if your preprint contains code that needs to run. This requires a successful <a href="https://terrarium.evidencepub.io" target="_blank">terrarium</a> build.</li>
-              <li>Select <b>No</b> if your preprint only contains static content (like Markdown, LaTeX files, or notebooks without code) that doesn't require any code execution.</li>
-            </ul>
-          </details>
-
-          <div class="section-header">
-            <i class="fas fa-keyboard"></i>
-            <b>Required inputs</b>
-          </div>
-
-          <details>
-            <summary>Toggle for instructions</summary>
-            <ul>
-              <li>Enter your email address where you'd like to receive build notifications</li>
-              <li>Enter your GitHub repository URL (e.g., https://github.com/neurolibre/mystical-article) or shorthand format (e.g., neurolibre/mystical-article)</li>
-              <li>If you choose "Yes" for executable content, the runtime will be based on the full commit hash of your most recent successful (i.e., latest) <a href="https://terrarium.evidencepub.io" target="_blank">terrarium</a> build.</li>
-              <li>Click "Build preprint" to start the build. You'll receive email notifications about the build progress and results.</li>
-            </ul>
-          </details>
-
-          <form id="preview-form" action="/neurolibre" accept-charset="UTF-8" method="post">
-            <div class="form-group">
-              <div class="row">
-                <div class="col">
-                  <label for="email" class="required">Email address</label>
-                  <input placeholder="user@mail.com" class="form-control" type="email" name="email" id="email" required />
-                </div>
-                <div class="col">
-                  <label for="repository" class="required">Preprint repository</label>
-                  <input placeholder="neurolibre/mystical-article" class="form-control" type="text" name="repository" id="repository" required />
-                </div>
-                <div class="col">
-                  <label for="branch">Binder commit ref (optional)</label>
-                  <input placeholder="latest (default)" class="form-control" type="text" name="branch" id="branch"/>
-                </div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="journal">Executable Content</label>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="journal" id="nlnb" value="True" checked>
-                <label class="form-check-label" for="nlnb">Yes</label>
-              </div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="journal" id="nlpaper" value="False">
-                <label class="form-check-label" for="nlpaper">No</label>
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <input type="submit" name="commit" value="Build preprint" class="btn" />
-            </div>
-          </form>
-        </div>
+    <div class="hero-band">
+      <div id="hstars" aria-hidden="true"></div>
+      <div id="hstars2" aria-hidden="true"></div>
+      <div id="hstars3" aria-hidden="true"></div>
+      <div class="hero-inner">
+        <img class="mark rise d1"
+             src="https://raw.githubusercontent.com/neurolibre/brand/main/png/preview_magn.png"
+             alt="NeuroLibre">
       </div>
     </div>
-  </div>
+
+    <h1 class="rise d2">Build a <em>living</em> preprint.</h1>
+
+    <p class="standfirst rise d2">
+      Reproducible, executable publications built straight from your repository.
+      Run a preview build before you submit.
+    </p>
+
+    <hr class="rule rise d3">
+
+    <p class="section-label rise d3">Before you build</p>
+
+    <ol class="checklist rise d3">
+      <li>
+        Structure your GitHub repository according to the
+        <a href="https://docs.neurolibre.org/en/latest/STRUCTURE.html" target="_blank" rel="noopener">NeuroLibre guidelines</a>.
+        Not there yet? Start from the
+        <a href="https://evidencepub.io/templates" target="_blank" rel="noopener">template gallery</a>.
+      </li>
+      <li>
+        If your preprint needs data,
+        <a href="https://github.com/neurolibre/info/issues/new?assignees=agahkarakuzu&labels=DOWNLOAD&projects=&template=data_cache.md&title=" target="_blank" rel="noopener">open an issue</a>
+        so we can cache it for you.
+      </li>
+      <li>
+        If your preprint is executable, confirm a successful
+        <a href="https://terrarium.evidencepub.io" target="_blank" rel="noopener">terrarium</a> build for your repository.
+      </li>
+    </ol>
+
+    <form id="preview-form" action="/neurolibre" accept-charset="UTF-8" method="post" class="rise d5">
+
+      <div class="field grid">
+        <div>
+        <div class="field-head">
+          <label for="email" class="required">Email address</label>
+          <span class="tip" tabindex="0" role="button" aria-label="More information" aria-describedby="tip-email">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7"/><path d="M8 7v4.2M8 4.6v.9"/></svg>
+            <span class="tip-body" id="tip-email" role="tooltip">Where build notifications are sent.</span>
+          </span>
+        </div>
+          <input placeholder="user@mail.com" type="email" name="email" id="email" required />
+        </div>
+        <div>
+        <div class="field-head">
+          <label for="repository" class="required">Preprint repository</label>
+          <span class="tip" tabindex="0" role="button" aria-label="More information" aria-describedby="tip-repo">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7"/><path d="M8 7v4.2M8 4.6v.9"/></svg>
+            <span class="tip-body" id="tip-repo" role="tooltip">Your GitHub repository, in full or as <code>owner/name</code>.</span>
+          </span>
+        </div>
+          <input placeholder="neurolibre/mystical-article" type="text" name="repository" id="repository" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-head">
+          <label for="branch">Binder commit ref</label>
+          <span class="tip" tabindex="0" role="button" aria-label="More information" aria-describedby="tip-branch">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7"/><path d="M8 7v4.2M8 4.6v.9"/></svg>
+            <span class="tip-body" id="tip-branch" role="tooltip">Only used with a custom runtime. Defaults to the commit hash of your most recent successful terrarium build.</span>
+          </span>
+        </div>
+        <input placeholder="latest (default)" type="text" name="branch" id="branch" disabled />
+      </div>
+
+      <fieldset class="runtime-band" aria-label="Reproducible runtime">
+        <div id="stars" aria-hidden="true"></div>
+        <div id="stars2" aria-hidden="true"></div>
+        <div id="stars3" aria-hidden="true"></div>
+
+        <div class="band-inner">
+        <p class="band-label">Reproducible runtime</p>
+
+        <input type="hidden" name="journal" value="False">
+        <label class="switch">
+          <input class="ch" type="checkbox" name="journal" id="nlnb" value="True"
+                 aria-describedby="journal-state" />
+          <span class="slider"></span>
+        </label>
+
+        <p class="toggle-state" id="journal-state">My preprint does not need a custom runtime environment</p>
+
+        <div class="terrarium" id="terrarium-gate">
+          <!-- No name attributes here: these are client side gates, never submitted. -->
+          <div class="gate-row">
+          <label class="neon-checkbox">
+            <input type="checkbox" id="binder-folder">
+            <div class="neon-checkbox__frame">
+              <div class="neon-checkbox__box">
+                <div class="neon-checkbox__check-container">
+                  <svg viewBox="0 0 24 24" class="neon-checkbox__check" aria-hidden="true">
+                    <path d="M3,12.5l7,7L21,5"></path>
+                  </svg>
+                </div>
+                <div class="neon-checkbox__glow"></div>
+                <div class="neon-checkbox__borders">
+                  <span></span><span></span><span></span><span></span>
+                </div>
+              </div>
+              <div class="neon-checkbox__effects">
+                <div class="neon-checkbox__particles">
+                  <span></span><span></span><span></span><span></span><span></span><span></span>
+                  <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="neon-checkbox__rings">
+                  <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+                </div>
+                <div class="neon-checkbox__sparks">
+                  <span></span><span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+          </label>
+            <label class="gate-text" for="binder-folder">I have created a <code>binder</code> folder to specify dependencies for my preprint</label>
+          </div>
+          <div class="gate-row">
+          <label class="neon-checkbox">
+            <input type="checkbox" id="terrarium-built">
+            <div class="neon-checkbox__frame">
+              <div class="neon-checkbox__box">
+                <div class="neon-checkbox__check-container">
+                  <svg viewBox="0 0 24 24" class="neon-checkbox__check" aria-hidden="true">
+                    <path d="M3,12.5l7,7L21,5"></path>
+                  </svg>
+                </div>
+                <div class="neon-checkbox__glow"></div>
+                <div class="neon-checkbox__borders">
+                  <span></span><span></span><span></span><span></span>
+                </div>
+              </div>
+              <div class="neon-checkbox__effects">
+                <div class="neon-checkbox__particles">
+                  <span></span><span></span><span></span><span></span><span></span><span></span>
+                  <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="neon-checkbox__rings">
+                  <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+                </div>
+                <div class="neon-checkbox__sparks">
+                  <span></span><span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+          </label>
+            <label class="gate-text" for="terrarium-built">I have built a runtime at <a href="https://terrarium.evidencepub.io" target="_blank" rel="noopener">terrarium.evidencepub.io</a></label>
+          </div>
+
+          <div class="gate-hint" id="terrarium-hint" role="note">
+            <p>Build it once. The same runtime is reused for every preview of your
+               preprint, so you only need a new one when your dependencies change.</p>
+          </div>
+          <p class="gate-note" id="gate-note">Confirm both to enable the build.</p>
+        </div>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit" name="commit" value="Build preprint" class="btn">
+          Build preprint
+          <div class="icon-1" aria-hidden="true">
+            <svg viewBox="0 0 26.3 65.33" xmlns="http://www.w3.org/2000/svg" style="shape-rendering:geometricPrecision; fill-rule:evenodd; clip-rule:evenodd">
+              <path d="M13.98 52.87c0.37,-0.8 0.6,-1.74 0.67,-2.74 1.01,1.1 2.23,2.68 1.24,3.87 -0.22,0.26 -0.41,0.61 -0.59,0.97 -2.95,5.89 3.44,10.87 2.98,0.78 0.29,0.23 0.73,0.82 1.03,1.18 0.33,0.4 0.7,0.77 1,1.15 0.29,0.64 -0.09,2.68 1.77,4.91 5.42,6.5 5.67,-2.38 0.47,-4.62 -0.41,-0.18 -0.95,-0.26 -1.28,-0.54 -0.5,-0.41 -1.23,-1.37 -1.66,-1.9 0.03,-0.43 -0.17,-0.13 0.11,-0.33 4.98,1.72 8.4,-1.04 2.38,-3.16 -1.98,-0.7 -2.9,-0.36 -4.72,0.16 -0.63,-0.58 -2.38,-3.82 -2.82,-4.76 1.21,0.56 1.72,1.17 3.47,1.3 6.5,0.5 2.31,-4.21 -2.07,-4.04 -1.12,0.04 -1.62,0.37 -2.49,0.62l-1.25 -3.11c0.03,-0.26 0.01,-0.18 0.1,-0.28 1.35,0.86 1.43,1 3.25,1.45 2.35,0.15 3.91,-0.15 1.75,-2.4 -1.22,-1.27 -2.43,-2.04 -4.22,-2.23l-2.08 0.13c-0.35,-0.58 -0.99,-2.59 -1.12,-3.3 -0.24,-0.36 1.88,1.31 2.58,1.57 1.32,0.49 2.6,0.33 3.82,0 -0.37,-1.08 -1.17,-2.31 -2.13,-3.11 -1.79,-1.51 -3.07,-1.41 -5.22,-1.38l-0.93 -4.07c0.41,-0.57 1.41,0.9 2.82,1.36 0.96,0.31 1.94,0.41 3,0.14 2,-0.52 -2.25,-4.4 -4.53,-4.71 -0.7,-0.1 -1.23,-0.04 -1.92,-0.03 -0.46,-0.82 -0.68,-3.61 -0.92,-4.74 0.8,0.88 1.15,1.54 2.25,2.23 0.8,0.5 1.58,0.78 2.57,0.85 2.54,0.18 -0.1,-3.47 -0.87,-4.24 -1.05,-1.05 -2.34,-1.59 -4.32,-1.78l-0.33 -3.49c0.83,0.67 1.15,1.48 2.3,2.16 1.07,0.63 2.02,0.89 3.58,0.79 0.15,-1.34 -1.07,-3.39 -2.03,-4.3 -1.05,-0.99 -2.08,-1.47 -3.91,-1.68l-0.07 -3.27 0.32 -0.65c0.44,0.88 1.4,1.74 2.24,2.22 0.69,0.39 2.4,1.1 3.44,0.67 0.31,-1.92 -1.84,-4.49 -3.5,-5.29 -0.81,-0.39 -1.61,-0.41 -2.18,-0.68 -0.12,-1.28 0.27,-3.23 0.37,-4.55l-0.89 0c-0.06,1.28 -0.35,3.12 -0.34,4.31 -0.44,0.45 -0.37,0.42 -0.96,0.64 -3.88,1.49 -4.86,6.38 -3.65,7.34 1.42,-0.31 3.69,-2.14 4.16,-3.66 0.23,0.5 0.1,2.36 0.05,3.05 -1.23,0.4 -2.19,1.05 -2.92,1.82 -1.17,1.24 -2.36,4.04 -1.42,5.69 1.52,0.09 4.07,-2.49 4.49,-4.07l0.29 3.18c-2.81,0.96 -5.01,3.68 -4.18,7.43 2.06,-0.09 3.78,-2.56 4.66,-4.15 0.23,1.45 0.67,3.06 0.74,4.52 -1.26,0.93 -2.37,1.8 -2.97,3.55 -0.48,1.4 -0.49,3.72 0.19,4.55 0.59,0.71 2.06,-1.17 2.42,-1.67 1,-1.35 0.81,-1.92 1.29,-2.46l0.7 3.44c-0.49,0.45 -0.94,0.55 -1.5,1.19 -1.93,2.23 -2.14,4.33 -1.01,6.92 0.72,0.09 2.04,-1.4 2.49,-2.06 0.65,-0.95 0.79,-1.68 1.14,-2.88l0.97 2.92c-0.2,0.55 -1.84,1.32 -2.6,3.62 -0.54,1.62 -0.37,3.86 0.67,4.93 0.58,-0.09 1.85,-1.61 2.2,-2.19 0.66,-1.09 0.66,-1.64 1,-2.93l1.32 3.18c-0.23,0.72 -1.63,1.72 -1.82,4.18 -0.17,2.16 1.11,6.88 3.13,2.46z" class="fil0"></path>
+            </svg>
+          </div>
+          <div class="icon-2" aria-hidden="true">
+            <svg viewBox="0 0 11.67 37.63" xmlns="http://www.w3.org/2000/svg" style="shape-rendering:geometricPrecision; fill-rule:evenodd; clip-rule:evenodd">
+              <path d="M7.63 35.26c-0.02,0.13 0.01,0.05 -0.06,0.14 -0,0 -0.08,0.07 -0.11,0.1 -0.42,0.25 -0.55,0.94 -0.23,1.4 0.68,0.95 2.66,0.91 3.75,0.21 0.2,-0.13 0.47,-0.3 0.57,-0.49 0.09,-0.02 0.04,0.03 0.11,-0.07l-1.35 -1.24c-0.78,-0.78 -1.25,-1.9 -2.07,-0.62 -0.11,0.18 -0.06,0.16 -0.22,0.26 -0.4,-0.72 -0.95,-1.79 -1.26,-2.59 0.82,0.02 1.57,-0.12 2.16,-0.45 0.49,-0.27 1.15,-0.89 1.33,-1.4 0.1,-0.06 0.02,0.01 0.06,-0.1 -0.24,-0.16 -0.87,-0.37 -1.19,-0.52 -0.4,-0.19 -0.73,-0.39 -1.09,-0.62 -0.25,-0.16 -0.85,-0.6 -1.18,-0.3 -0.35,0.32 -0.32,0.83 -0.53,1.17 -0.71,-0.3 -0.55,-0.26 -0.84,-1.22 -0.15,-0.5 -0.31,-1.12 -0.41,-1.66l0.03 -0.13c0.56,0.23 1.28,0.37 1.99,0.28 0.56,-0.07 1.33,-0.42 1.62,-0.71l0.1 -0.1c-0.74,-0.68 -1.09,-1.2 -1.65,-1.99 -1.09,-1.52 -1.2,-0.28 -1.92,0.17 -0.26,-0.79 -0.73,0.2 -0.12,-2.76 0.06,-0.3 0.19,-0.7 0.2,-0.98 0.18,0.08 0.01,-0.01 0.11,0.08 0.05,0.05 0.07,0.07 0.1,0.12 0.94,1.17 3.63,0.82 4.21,0.01 0.13,-0.02 0.06,0.03 0.1,-0.1 -1.14,-0.81 -1.91,-2.89 -2.58,-2.67 -0.29,0.09 -0.78,0.63 -0.93,0.87 -0.54,-0.48 -0.36,-0.63 -0.38,-0.81 0.01,-0.01 0.03,-0.04 0.03,-0.03 0.01,0.02 0.36,-0.35 0.45,-0.6 0.13,-0.35 0.04,-0.65 -0.05,-0.95 0.06,-0.41 0.33,-1.33 0.28,-1.71 0.22,-0.05 0.19,0.05 0.45,0.17 0.47,0.23 1.17,0.33 1.7,0.32 0.62,-0 1.74,-0.39 1.94,-0.75 0.14,-0.02 0.05,0.06 0.13,-0.09 -1.05,-1.1 -0.7,-0.64 -1.62,-1.92 -0.58,-0.81 -0.9,-1.27 -1.9,0.12 -0.44,-0.5 -0.64,-0.69 -0.66,-1.24 0.02,-0.31 0.15,-0.36 0.08,-0.73 -0.04,-0.24 -0.14,-0.41 -0.29,-0.59l-0.47 -2.54c0.09,-0.14 -0.09,-0.1 0.2,-0.05 0.06,0.01 0.19,0.05 0.3,0.07 0.54,0.09 1.47,0.01 1.95,-0.15 0.57,-0.19 1.53,-0.8 1.68,-1.18 0.16,-0.07 0.05,0.02 0.15,-0.13 -0.12,-0.15 -0.95,-0.65 -1.15,-0.8 -1.43,-1.08 -2.21,-2.77 -3.16,-0.38 -0.2,-0.1 -0.75,-0.55 -0.83,-0.74 -0.15,-0.35 -0.21,-0.81 -0.37,-1.15l-0.1 -0.25c-0.03,-0.3 -0.44,-1.33 -0.57,-1.64 -0.2,-0.51 -0.47,-1.09 -0.64,-1.6l-0.55 0c0.14,0.42 0.36,0.84 0.53,1.28 0.12,0.3 0.19,0.35 0.06,0.66l-0.21 0.52c-0.01,0.01 -0.01,0.02 -0.02,0.03 -0.06,0.1 -0.03,0.05 -0.06,0.09 -1.44,-1.03 -1.66,-0.73 -2.07,0.46 -0.16,0.46 -0.3,0.93 -0.5,1.36l-0.64 1.28c0.06,0.07 -0,0.03 0.1,0.03 0.05,0.05 0.02,0.03 0.1,0.08l0.49 0.14c0.23,0.05 0.44,0.09 0.66,0.1 0.55,0.04 0.94,-0.06 1.35,-0.19 0.54,-0.18 1.09,-0.44 1.5,-0.82 0.15,-0.14 0.24,-0.3 0.4,-0.41l0.46 1.66c0.03,0.74 -0.09,0.6 0.27,1.21 0.01,0.01 0.01,0.02 0.02,0.03 0.01,0.01 0.01,0.02 0.02,0.04l0.07 0.11c-0.02,0.22 0.19,1.01 0.24,1.29 0.09,0.46 -0.21,0.79 -0.3,1.2 -0.55,-0.23 -1.25,-1.06 -1.66,-0.23 -0.12,0.25 -0.17,0.36 -0.26,0.62 -0.33,1.01 -0.63,1.61 -1.06,2.43l0.12 0.04 0.23 0.11c0.06,0.02 0.17,0.04 0.25,0.06 0.17,0.04 0.34,0.08 0.52,0.09 0.29,0.02 0.93,0.07 1.12,-0.13 0.42,0.01 1.24,-0.49 1.51,-0.71 0.01,0.01 0.03,0 0.04,0.02l0.09 0.06c-0.04,0.29 0.02,0.41 0.03,0.7l-0.05 1.41c-0.06,1.12 -0.29,1.06 -0.76,1.69 -0.08,-0.07 -0.03,-0.01 -0.11,-0.11 -0.03,-0.03 -0.06,-0.08 -0.09,-0.11 -0.2,-0.25 -0.38,-0.54 -0.7,-0.69 -0.7,-0.32 -1.52,1.73 -2.82,2.61 0.04,0.2 -0.01,0.06 0.1,0.11 0.25,0.3 1,0.67 1.5,0.78 0.35,0.08 0.71,0.08 1.09,0.05 0.25,-0.02 0.82,-0.16 0.92,-0.13 -0.16,0.69 -0.35,1.35 -0.52,2.03 -0.25,1 -0.03,0.77 -0.98,1.53 -0.3,-0.31 -0.33,-0.77 -0.77,-1.02 -0.42,-0.25 -0.91,0.35 -1.12,0.55 -0.33,0.32 -0.58,0.6 -0.97,0.89 -0.19,0.14 -0.34,0.26 -0.53,0.4 -0.14,0.11 -0.43,0.29 -0.53,0.4 0.1,0.15 -0.02,0.06 0.15,0.13 0.09,0.22 0.35,0.38 0.54,0.52 0.22,0.16 0.43,0.29 0.69,0.39 0.43,0.17 1.32,0.31 1.87,0.23l0.23 -0.05c0.01,-0 0.03,-0.02 0.04,-0.02 0.01,-0 0.02,-0.01 0.03,-0.02 0.32,0.05 0.52,-0.18 0.79,-0.24l-0.02 0.66c0,0.77 -0.24,0.75 0.16,1.51l0.04 0.07c0,0.01 0.01,0.03 0.02,0.04 -0.05,0.35 0.18,1.03 0.24,1.4 -0.23,0.18 -0.34,0.33 -0.51,0.41 -0.75,-1.17 -0.82,-1.52 -1.92,-0.43 -0.32,0.31 -0.59,0.57 -0.95,0.86 -0.23,0.19 -0.95,0.65 -1.05,0.81l0.13 0.1c0.88,1.15 3.14,1.5 4.1,0.82 0.47,-0.34 0.54,-0.56 0.52,-1.34l0.67 1.84c0.03,0.16 0.06,0.28 0.12,0.42 0.03,0.06 0.05,0.12 0.09,0.17 0.1,0.15 0.03,0.06 0.13,0.14 -0,0.29 0.14,0.22 0.06,0.56 -0.03,0.13 -0.14,0.43 -0.19,0.53 -1.94,-1.27 -1.57,-0.02 -2.28,1.76 -0.16,0.41 -0.37,0.77 -0.53,1.2 0.09,0.08 0.01,0.03 0.15,0.03 0.29,0.33 1.66,0.28 2.36,-0.01 0.48,-0.2 0.96,-0.46 1.3,-0.82 0.15,-0.16 0.16,-0.3 0.38,-0.33 0.14,0.08 0.17,0.19 0.27,0.36z" class="fil0"></path>
+            </svg>
+          </div>
+          <div class="icon-3" aria-hidden="true">
+            <svg viewBox="0 0 25.29 76.92" xmlns="http://www.w3.org/2000/svg" style="shape-rendering:geometricPrecision; fill-rule:evenodd; clip-rule:evenodd">
+              <path d="M19.14 6.58c0.09,0.1 -0.02,0.03 0.17,0.15 0.04,0.03 0.19,0.09 0.27,0.13l0.16 0.02c0.12,0.14 0.02,0.06 0.22,0.18 0.63,0.37 1.81,0.52 2.51,0.53 0.42,-0.26 0.61,-1.58 0.55,-2.27 -0.11,-1.17 -1.02,-3.42 -2.17,-3.76 -0.84,-0.25 -1.19,0.02 -1.4,0.7 -0.03,0.1 -0.05,0.19 -0.09,0.28l-0.18 0.25c-0.18,-0.36 -0.77,-0.97 -1.2,-1.18 -0.64,-0.31 -0.36,-0.26 -0.84,-1.59l-0.75 0c0.2,0.63 0.44,1.27 0.61,1.92 0.17,0.64 0.47,1.46 0.58,2.05 -0.21,0.36 -0.43,0.5 -0.31,1.1 0.11,0.51 0.35,0.71 0.76,0.9 0.13,0.31 0.36,1.33 0.39,1.78 -0.68,0.24 -1.38,0.85 -1.62,1.43 -0.45,-0.47 -0.29,-1.59 -1.59,-1.22 -0.8,0.22 -1.09,0.8 -1.45,1.52 -0.58,1.18 -0.96,2.15 -0.6,3.58 0.04,0.17 0.13,0.4 0.19,0.55 0.11,0.29 0.09,0.34 0.35,0.44 1.74,-0.01 2.96,-0.82 4.13,-1.55 0.22,-0.13 0.65,-0.39 0.79,-0.62 0.74,-1.2 -0.74,-2.14 -1.7,-2.43 -0.01,-0.51 1.07,-0.87 1.7,-0.82 0.21,1.74 0.56,3.5 0.61,5.33 0.05,2.05 0.01,3.68 -0.08,5.71 -1.2,0.52 -0.99,0.65 -1.77,1.46 -0.39,-0.45 -0.22,-1.6 -1.59,-1.18 -0.79,0.24 -0.91,0.63 -1.42,1.55 -0.78,1.41 -0.95,2.66 -0.36,4.15 0.14,0.35 0.06,0.36 0.36,0.37 0.78,-0 1.47,-0.18 2.09,-0.43 0.51,-0.2 1.26,-0.76 1.69,-0.86 -0.18,0.3 -0.34,0.91 -0.48,1.25l-1.54 3.5c-1.75,0.08 -1.26,0.29 -2.27,0.59 0.1,-1.15 0.1,-1.69 -1.1,-1.78 -0.7,-0.05 -1.5,0.65 -1.91,0.96 -1.04,0.82 -1.93,1.81 -1.94,3.77 0.09,0.22 -0.03,0.09 0.18,0.11 0.24,0.36 1.4,0.49 1.94,0.58l0.19 -0.01 0.71 -0.01 0.08 -0.02 1.74 -0.17c0.25,0.04 0.03,-0.07 0.19,0.09l-2.62 4.74c-0.28,0.51 -0.56,1.2 -0.86,1.61 -0.44,-0.02 -0.69,-0.14 -1.18,-0.08 -0.38,0.04 -0.72,0.17 -1.08,0.22 0.1,-0.53 0.78,-1.5 -0.62,-1.96 -0.79,-0.26 -1.74,0.32 -2.33,0.6 -2.12,1.02 -2.81,3.28 -2.36,3.38 0.01,0.01 0.03,0.02 0.03,0.04l0.11 0.1c0.42,0.34 1.16,0.64 1.66,0.79 0.65,0.19 1.73,0.31 2.43,0.38 3,0.28 1.16,-2.8 1.09,-3.14 0.86,0.12 1.3,-0.05 1.81,0.56 -0.08,0.35 -0.53,1.2 -0.71,1.6 -0.74,1.61 -1.24,3.24 -1.73,4.96 -0.92,0.11 -1.11,0.44 -1.77,0.69 0.01,-1.08 0.1,-1.68 -1.14,-1.71 -0.55,-0.01 -0.8,0.17 -1.11,0.41 -1.43,1.08 -2.52,2.24 -2.53,4.15 -0,0.62 0.11,0.48 0.22,0.54 0.63,0.38 1.79,0.44 2.67,0.35 0.47,-0.05 0.97,-0.11 1.43,-0.2l0.98 -0.22c0.38,-0.08 0.14,-0.15 0.26,0.06 -0.08,0.78 -0.66,2.6 -0.56,3.29 -0.13,0.14 -0.07,0.08 -0.17,0.29 -0.06,0.13 -0.08,0.18 -0.12,0.33 -0.07,0.3 -0.02,0.6 -0.03,0.92 -0.09,0.94 -0.17,0.52 -0.78,0.94 -0.32,0.22 -0.57,0.55 -0.86,0.82 -0.29,-0.69 -0.22,-1.44 -1.39,-1.13 -0.93,0.25 -1.93,2.19 -2.03,3.16 -0.06,0.56 0.02,1.84 0.39,2.08 2,0.02 2.64,-0.6 4.08,-1.25l-0.01 0.28c-0.06,0.58 -0.22,2.09 -0.14,2.62 -0.44,0.37 -0.46,1.03 -0.12,1.49 -0.08,3.97 0.16,2.73 -0.77,3.57 -0.24,0.21 -0.37,0.4 -0.62,0.62 -0.36,-0.53 -0.09,-1.43 -1.37,-1.13 -0.98,0.23 -1.92,2.22 -2.06,3.14 -0.07,0.47 -0.07,1.79 0.41,2.09 0.86,0.04 1.94,-0.12 2.51,-0.52l0.16 -0.08c0.6,-0.17 1.39,-0.67 1.84,-0.94 0.12,0.18 0.04,0.07 0.14,0.1 -0.18,0.38 -0.31,0.07 -0.71,0.58 -0.67,0.86 0.33,1.72 0.89,2.31 0.6,0.64 1.71,1.63 2.94,1.88 0.38,-0.11 0.92,-1.2 1.04,-1.69 0.21,-0.86 0.15,-1.53 -0.05,-2.41 -0.22,-0.94 -0.24,-1.38 -1.01,-1.81 -0.93,-0.52 -1.19,0.28 -1.59,0.76 -0.21,-0.33 -0.33,-0.79 -0.58,-1.12 -0.48,-0.62 -0.48,-0.13 -0.5,-1.22 -0.02,-1.09 0.05,-2.25 0.01,-3.32 0.37,0.22 0.89,0.86 1.37,1.21 0.51,0.37 1.05,0.65 1.76,0.82 0.32,-0.02 0.92,-1.21 1.04,-1.68 0.22,-0.87 0.15,-1.53 -0.04,-2.41 -0.19,-0.86 -0.3,-1.41 -0.96,-1.79 -1.06,-0.6 -1.26,0.38 -1.71,0.74 -0.22,-0.8 -0.65,-1.34 -1.19,-1.71l0.5 -4.35 0.38 0.28c0.23,0.25 0.6,0.67 0.87,0.82 0.07,0.1 0.05,0.1 0.19,0.21 0.18,0.23 0.66,0.57 0.92,0.6 0.1,0.13 -0.01,0.03 0.16,0.16 0.08,0.06 0.1,0.07 0.18,0.11 0.14,0.07 0.26,0.1 0.44,0.15l0.45 0.17c0.35,0.08 0.75,-0.74 0.91,-1.05 0.21,-0.4 0.41,-1.07 0.43,-1.57 -0,-0.28 0.04,-0.67 -0.1,-0.85l0.03 -0.17c-0,-0.04 -0.01,-0.13 -0.01,-0.15 -0.05,-0.13 -0.03,-0.1 -0.09,-0.17 0.06,-0.51 -0.25,-1.75 -0.94,-2.22 -1.11,-0.74 -1.37,0.09 -1.86,0.69l-0.12 -0.2c-0.28,-0.56 -0.41,-1.06 -1,-1.45 0.04,-1.21 1.29,-5.03 1.31,-5.65 0.07,0.06 0.05,0.04 0.12,0.13 0.63,0.83 0.41,0.6 1.22,1.38 0.76,0.74 1.67,1.73 2.95,1.92 0.28,0.13 0.55,-0.41 0.69,-0.64 0.21,-0.34 0.36,-0.64 0.47,-1.02 0.36,-1.24 0.14,-3.92 -1.03,-4.6 -1.23,-0.72 -1.67,0.89 -1.75,0.72 -0.01,-0.01 -0.03,0.02 -0.04,0.03 -0.19,-0.33 -0.3,-0.68 -0.49,-1 -0.22,-0.38 -0.47,-0.51 -0.68,-0.79 0.39,-1.04 1.05,-2.29 1.59,-3.3 0.57,-1.06 1.2,-2.15 1.7,-3.17 1.43,-0.02 1.51,0.55 1.8,0.6 -0.1,0.19 -0.02,0.07 -0.16,0.2 -0.01,0.01 -0.21,0.13 -0.23,0.15 -0.8,0.47 -1.8,0.96 -1.37,2.09 0.14,0.37 0.42,0.53 0.75,0.73 1.23,0.73 2.46,1.53 4.32,1.53 0.28,-0.08 0.25,-0.15 0.35,-0.44 0.22,-0.63 0.33,-1.22 0.26,-1.93 -0.11,-1.05 -1.06,-3.33 -2.21,-3.65 -1.31,-0.37 -1.17,0.6 -1.56,1.21l-0.2 -0.19c-0.84,-0.96 -0.61,-0.56 -1.27,-1.09 0.16,-0.47 0.7,-1.32 0.98,-1.82 1.05,-1.91 1.94,-3.59 2.84,-5.61 0.73,0.01 1.23,0.31 1.57,0.68 -0.26,0.25 -1.37,0.7 -1.67,1.19 -0.51,0.8 -0.07,1.45 0.63,1.87 1.15,0.7 2.56,1.58 4.34,1.55 0.33,-0.09 0.46,-0.67 0.52,-0.98 0.28,-1.4 -0.01,-2.34 -0.66,-3.5 -0.49,-0.87 -0.67,-1.3 -1.44,-1.54 -1.15,-0.36 -1.27,0.44 -1.56,1.23 -0.65,-0.55 0.03,-0.23 -1.38,-1.25 0.22,-0.6 1.08,-2.59 1.06,-3.14 0.38,-0.35 0.52,-0.78 0.43,-1.4 0.22,-0.75 0.67,-4.16 0.53,-5 0.32,0.09 0.75,0.4 1.06,0.57 0.35,0.2 0.71,0.39 1.06,0.57 0.73,0.38 1.61,0.62 2.65,0.61 0.58,-0.21 0.64,-1.82 0.61,-2.32 -0.04,-0.79 -0.45,-1.64 -0.77,-2.19 -0.39,-0.68 -0.64,-1.3 -1.45,-1.52 -1.33,-0.36 -1.16,0.63 -1.55,1.24 -0.67,-0.66 -0.61,-0.87 -1.64,-1.37 -0.06,-2.55 -0.87,-5.97 -0.9,-6.74l0.15 -0.03 0.01 -0.03z" class="fil0"></path>
+            </svg>
+          </div>
+        </button>
+      </div>
+    </form>
+
+    <footer class="rise d6">
+      Questions? See the <a href="https://docs.neurolibre.org" target="_blank" rel="noopener">documentation</a>.
+    </footer>
+
+  </main>
 
   <script>
-    document.getElementById('preview-form').addEventListener('submit', function(event) {
+    document.getElementById('preview-form').addEventListener('submit', function() {
       const branchInput = document.getElementById('branch');
-      if (!branchInput.value) {
+      if (!branchInput.disabled && !branchInput.value) {
         branchInput.value = 'latest';
       }
     });
 
-    document.querySelectorAll('input[name="journal"]').forEach(radio => {
-      radio.addEventListener('change', function() {
-        const branchInput = document.getElementById('branch');
-        const branchLabel = branchInput.previousElementSibling;
+    // Runtime is a checkbox. A hidden input ahead of it carries the unchecked
+    // value, so the posted `journal` is still True or False.
+    const executable = document.getElementById('nlnb');
+    const branchInput = document.getElementById('branch');
+    const branchLabel = document.querySelector('label[for="branch"]');
+    const stateText = document.getElementById('journal-state');
+    const gate = document.getElementById('terrarium-gate');
+    const gateBoxes = [
+      document.getElementById('binder-folder'),
+      document.getElementById('terrarium-built')
+    ];
+    const gateNote = document.getElementById('gate-note');
+    const submitBtn = document.querySelector('#preview-form button[type="submit"]');
 
-        branchInput.disabled = this.value === 'False';
-        if (this.value === 'False') {
-          branchInput.value = '';
-          branchInput.required = false;
-          branchLabel.classList.remove('required');
-        } else {
-          branchInput.required = true;
-          branchLabel.classList.add('required');
-        }
+    function syncExecutable() {
+      const on = executable.checked;
+
+      branchInput.disabled = !on;
+      branchInput.required = on;
+      branchLabel.classList.toggle('required', on);
+      if (!on) { branchInput.value = ''; }
+
+      stateText.textContent = on
+        ? 'My preprint needs a custom runtime environment'
+        : 'My preprint does not need a custom runtime environment';
+      stateText.classList.toggle('on', on);
+
+      gate.classList.toggle('show', on);
+      // `required` is only set while the controls are visible. A required
+      // control that is display:none makes the browser refuse to submit at all.
+      gateBoxes.forEach(box => {
+        box.required = on;
+        if (!on) { box.checked = false; }
       });
-    });
+
+      syncGate();
+    }
+
+    const terrariumBox  = document.getElementById('terrarium-built');
+    const terrariumHint = document.getElementById('terrarium-hint');
+
+    function syncGate() {
+      terrariumHint.classList.toggle('show', terrariumBox.checked);
+
+      const remaining = gateBoxes.filter(box => !box.checked).length;
+      const blocked = executable.checked && remaining > 0;
+
+      submitBtn.disabled = blocked;
+      gateNote.textContent = blocked
+        ? (remaining > 1 ? 'Confirm both to enable the build.'
+                         : 'One left to confirm.')
+        : 'Ready to build.';
+    }
+
+    executable.addEventListener('change', syncExecutable);
+    gateBoxes.forEach(box => box.addEventListener('change', syncGate));
+    syncExecutable();
+
+    // Reveal each checklist step as it scrolls into view.
+    const steps = document.querySelectorAll('.checklist li');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+      steps.forEach(step => step.classList.add('in'));
+    } else {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { rootMargin: '0px 0px -18% 0px', threshold: 0.35 });
+
+      steps.forEach(step => observer.observe(step));
+    }
   </script>
 </body>
 </html>
