@@ -4,7 +4,6 @@ require 'time'
 require 'yaml'
 require 'faraday'
 require 'logger'
-require 'openai'
 require_relative 'github'
 
 
@@ -20,15 +19,6 @@ $PROD_SSL = true
 
 module NeurolibreUtilities
 
-    def openai_client
-        OpenAI.configure do |config|
-            config.access_token = ENV['OAI_ACCESS_TOKEN']
-            config.organization_id = ENV['OAI_ORG_ID']
-            config.request_timeout = 120
-        end
-        @openai_client = OpenAI::Client.new
-    end
-
     def neurolibre_test_client
         @neurolibre_test_client = Faraday.new(url: $TEST_DOMAIN) do |faraday|
           faraday.request :json
@@ -43,18 +33,6 @@ module NeurolibreUtilities
           faraday.ssl.verify = $PROD_SSL
           faraday.request :authorization, :basic, ENV['PREVIEW_API_USER'], ENV['PREVIEW_API_KEY']
         end
-    end
-
-    def get_funny_quote(repo_url)
-        branch = get_default_branch(repo_url)
-        target_repo = get_repo_owner_and_name(repo_url)
-        response = openai_client.chat(
-            parameters: {
-                model: "gpt-3.5-turbo", # Required.
-                messages: [{ role: "user", content: "Write an amusing and moderately flattering one liner quote based on the content of https://raw.githubusercontent.com/#{target_repo.split("/")[0]}/#{target_repo.split("/")[1]}/#{branch}/paper.md"}], # Required.
-                temperature: 0.7,
-            })
-        return response.dig("choices", 0, "message", "content")
     end
 
     class << self

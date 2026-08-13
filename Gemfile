@@ -19,7 +19,6 @@ gem 'github-linguist'
 gem 'licensee'
 gem 'issue'
 gem 'chronic'
-gem "ruby-openai"
 
 # Ruby 3.4 moved bigdecimal from a default gem to a bundled one. crack, via
 # webmock, requires it at runtime without declaring it, so the suite fails to
