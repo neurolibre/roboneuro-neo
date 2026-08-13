@@ -1,8 +1,9 @@
 source 'https://rubygems.org'
 
-if ENV["CUSTOM_RUBY_VERSION"]
-  ruby ENV["CUSTOM_RUBY_VERSION"]
-end
+# Declared unconditionally so bundler records a RUBY VERSION in Gemfile.lock.
+# Heroku's buildpack chooses the ruby to install by reading that stanza, before
+# bundler ever runs, so a conditional directive leaves it on the stack default.
+ruby ENV.fetch("CUSTOM_RUBY_VERSION", "3.3.12")
 
 gem 'octokit'
 gem 'sinatra', '4.1.1'

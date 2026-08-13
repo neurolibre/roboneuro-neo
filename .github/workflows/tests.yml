@@ -10,11 +10,14 @@ jobs:
       # the first failure.
       fail-fast: false
       matrix:
-        ruby-version: ['3.3', '3.4']
+        # Exact versions: the Gemfile declares a ruby version, so the
+        # installed one must match it exactly. 3.3.12 is what production runs.
+        ruby-version: ['3.3.12', '3.4.10']
         failure-allowed: [false]
-        include:
-        - ruby-version: 'truffleruby'
-          failure-allowed: true
+    env:
+      # Overrides the Gemfile's default so each matrix entry declares the
+      # ruby it actually installed.
+      CUSTOM_RUBY_VERSION: ${{ matrix.ruby-version }}
     steps:
     - uses: actions/checkout@v3
     - name: Set up Ruby
