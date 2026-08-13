@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COAR Notify Inbox - NeuroLibre</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    .status-pending { animation: pulse-subtle 2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        COAR Notify Dashboard
+      </h1>
+      <p class="mt-2 text-gray-600">COAR Notify Dashboard for NeuroLibre</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="text-sm font-medium text-gray-600">Total</div>
+        <div class="mt-1 text-2xl font-semibold text-gray-900"><%= @stats[:total] %></div>
+      </div>
+      <div class="bg-yellow-50 rounded-lg shadow p-4 border border-yellow-200">
+        <div class="text-sm font-medium text-yellow-800">Pending</div>
+        <div class="mt-1 text-2xl font-semibold text-yellow-900"><%= @stats[:pending] %></div>
+      </div>
+      <div class="bg-blue-50 rounded-lg shadow p-4 border border-blue-200">
+        <div class="text-sm font-medium text-blue-800">Processing</div>
+        <div class="mt-1 text-2xl font-semibold text-blue-900"><%= @stats[:processing] %></div>
+      </div>
+      <div class="bg-green-50 rounded-lg shadow p-4 border border-green-200">
+        <div class="text-sm font-medium text-green-800">Processed</div>
+        <div class="mt-1 text-2xl font-semibold text-green-900"><%= @stats[:processed] %></div>
+      </div>
+      <div class="bg-red-50 rounded-lg shadow p-4 border border-red-200">
+        <div class="text-sm font-medium text-red-800">Failed</div>
+        <div class="mt-1 text-2xl font-semibold text-red-900"><%= @stats[:failed] %></div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow mb-6 p-4">
+      <form method="get" class="flex flex-wrap gap-4 items-end">
+        <div class="flex-1 min-w-[200px]">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Direction</label>
+          <select name="direction" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="received" <%= @current_direction == 'received' ? 'selected' : '' %>>Received</option>
+            <option value="sent" <%= @current_direction == 'sent' ? 'selected' : '' %>>Sent</option>
+          </select>
+        </div>
+        <div class="flex-1 min-w-[200px]">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select name="status" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Statuses</option>
+            <option value="pending" <%= @current_status == 'pending' ? 'selected' : '' %>>Pending</option>
+            <option value="processing" <%= @current_status == 'processing' ? 'selected' : '' %>>Processing</option>
+            <option value="processed" <%= @current_status == 'processed' ? 'selected' : '' %>>Processed</option>
+            <option value="failed" <%= @current_status == 'failed' ? 'selected' : '' %>>Failed</option>
+            <option value="cancelled" <%= @current_status == 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+          </select>
+        </div>
+        <div class="flex-1 min-w-[200px]">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Service</label>
+          <select name="service" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Services</option>
+            <% @services.each do |service| %>
+              <option value="<%= service %>" <%= @current_service == service ? 'selected' : '' %>><%= service %></option>
+            <% end %>
+          </select>
+        </div>
+        <div>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            Apply Filters
+          </button>
+        </div>
+        <% if @current_status || @current_service %>
+          <div>
+            <a href="/coar_notify/dashboard?direction=<%= @current_direction %>" class="text-sm text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md border border-gray-300 inline-block">
+              Clear Filters
+            </a>
+          </div>
+        <% end %>
+      </form>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <% if @notifications.empty? %>
+        <div class="text-center py-12">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No notifications</h3>
+          <p class="mt-1 text-sm text-gray-500">No notifications found matching your filters.</p>
+        </div>
+      <% else %>
+        <ul class="divide-y-4 divide-gray-200">
+          <% @notifications.each do |notification| %>
+            <li class="hover:bg-purple-100 transition-colors">
+              <a href="/coar_notify/dashboard/<%= notification.id %>" class="block px-6 py-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 mb-2">
+                      <!-- Status Badge -->
+                      <%
+                        status_colors = {
+                          'pending' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                          'processing' => 'bg-blue-100 text-blue-800 border-blue-200',
+                          'processed' => 'bg-green-100 text-green-800 border-green-200',
+                          'failed' => 'bg-red-100 text-red-800 border-red-200',
+                          'cancelled' => 'bg-gray-100 text-gray-700 border-gray-200'
+                        }
+                        status_class = status_colors[notification.status] || 'bg-gray-100 text-gray-800'
+                        pulse_class = notification.status == 'pending' ? 'status-pending' : ''
+                      %>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border <%= status_class %> <%= pulse_class %>">
+                        <%= notification.status %>
+                      </span>
+
+                      <!-- Notification Types -->
+                      <% if notification.notification_types %>
+                        <% notification.notification_types.each do |type| %>
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                            <%= type %>
+                          </span>
+                        <% end %>
+                      <% end %>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span class="font-medium text-gray-700">From:</span>
+                        <span class="text-gray-900"><%= notification.service_name || notification.origin_id %></span>
+                      </div>
+                      <div>
+                        <span class="font-medium text-gray-700">Object:</span>
+                        <span class="text-gray-600 truncate block"><%= notification.object_id %></span>
+                      </div>
+                      <% if notification.context_id %>
+                        <div>
+                          <span class="font-medium text-gray-700">Context:</span>
+                          <span class="text-gray-600 truncate block"><%= notification.context_id %></span>
+                        </div>
+                      <% end %>
+                      <% if notification.actor_name %>
+                        <div>
+                          <span class="font-medium text-gray-700">Actor:</span>
+                          <span class="text-gray-600"><%= notification.actor_name %></span>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+
+                  <div class="ml-4 flex-shrink-0 text-right">
+                    <div class="text-sm text-gray-500">
+                      <%= notification.created_at.strftime('%b %d, %Y') %>
+                    </div>
+                    <div class="text-xs text-gray-400">
+                      <%= notification.created_at.strftime('%I:%M %p') %>
+                    </div>
+                    <% if notification.error_message %>
+                      <div class="mt-1">
+                        <span class="text-xs text-red-600 font-medium">Error</span>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-8 text-center text-sm text-gray-500">
+      Showing <%= @notifications.length %> of <%= @stats[:total] %> notifications
+      <% if @notifications.length >= 100 %>
+        (limited to 100 most recent)
+      <% end %>
+    </div>
+  </div>
+</body>
+</html>

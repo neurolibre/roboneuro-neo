@@ -32,3 +32,16 @@ buffy:
         - pending review
     welcome:
       message: "Hi!, I'm @roboneuro, a friendly bot.\n\nType ```@roboneuro help``` to discover how I can help you."
+
+coar_notify:
+  env:
+    enabled: true
+    inbox_url: http://localhost:3000/coar_notify/inbox
+    service_id: https://neurolibre.org
+    database_url: "<%= ENV['DATABASE_URL'] || 'postgresql://roboneuro:roboneuro@localhost:5433/roboneuro_development' %>"
+    ip_whitelist_enabled: false
+    allowed_ips: []
+    sql_log_level: WARN  # DEBUG, INFO, WARN, ERROR, FATAL
+    outbox_secret: "<%= ENV['COAR_OUTBOX_SECRET'] || 'dev-outbox-secret' %>"
+    dashboard_user: "<%= ENV['COAR_DASHBOARD_USER'] || 'roboneuro' %>"
+    dashboard_password: "<%= ENV['COAR_DASHBOARD_PASSWORD'] || 'roboneuro' %>"

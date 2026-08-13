@@ -19,6 +19,7 @@ module ResponderParams
       # NeuroLibre's responders declare required_params but were never
       # registered here, so instantiating them in the shared responder specs
       # raised a configuration error.
+      Neurolibre::CoarResponder                     => {},
       Neurolibre::BinderBuildResponder            => { external_call: { url: "https://neurolibre.org" } },
       Neurolibre::BuildBookResponder              => { data_from_issue: ["target-repository"] },
       Neurolibre::BuildExtendedPdfResponder       => { external_call: { url: "https://neurolibre.org" } },

@@ -3,3 +3,10 @@
 # Override and add customized gems in this file.
 
 gem 'ojra'
+
+# COAR Notify dependencies
+# Pinned to upstream dev: the released 0.1.0 gem still carries the
+# Core::Notify::ValidationError constant bug, fixed only on dev.
+gem 'coarnotify', git: 'https://github.com/coar-notify/coarnotifyrb.git', ref: '7cb489e40191799b90a830ab6b324e75d30d8119'
+gem 'sequel', '~> 5.0'                   # Database ORM (lightweight for Sinatra)
+gem 'pg', '~> 1.5'                       # PostgreSQL adapter

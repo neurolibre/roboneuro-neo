@@ -1,3 +1,11 @@
+GIT
+  remote: https://github.com/coar-notify/coarnotifyrb.git
+  revision: 7cb489e40191799b90a830ab6b324e75d30d8119
+  ref: 7cb489e40191799b90a830ab6b324e75d30d8119
+  specs:
+    coarnotify (0.1.0)
+      json (~> 2.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -33,6 +41,7 @@ GEM
     issue (1.0.0)
       openssl
       rack
+    json (2.21.2)
     latex-decode (0.4.0)
     licensee (9.16.0)
       dotenv (~> 2.0)
@@ -55,6 +64,7 @@ GEM
     ojra (1.1.0)
       faraday (~> 2.7)
     openssl (3.1.0)
+    pg (1.6.3)
     public_suffix (5.0.1)
     puma (6.2.2)
       nio4r (~> 2.0)
@@ -92,6 +102,8 @@ GEM
     sawyer (0.9.2)
       addressable (>= 2.3.5)
       faraday (>= 0.17.3, < 3)
+    sequel (5.107.0)
+      bigdecimal
     serrano (1.4)
       faraday (~> 2.2)
       faraday-follow_redirects (~> 0.1.0)
@@ -130,6 +142,7 @@ DEPENDENCIES
   bibtex-ruby
   bigdecimal
   chronic
+  coarnotify!
   faraday
   faraday-retry
   github-linguist
@@ -138,10 +151,12 @@ DEPENDENCIES
   octokit
   ojra
   openssl
+  pg (~> 1.5)
   puma
   rack-test
   rexml
   rspec
+  sequel (~> 5.0)
   serrano
   sidekiq
   sinatra (= 4.1.1)

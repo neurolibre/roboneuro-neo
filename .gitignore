@@ -42,3 +42,6 @@ docs/_build/
 __pycache__/
 *.py[cod]
 *$py.class
+# COAR Notify local database artifact
+*.db
+log/puma_*.log
