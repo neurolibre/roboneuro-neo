@@ -15,6 +15,31 @@ module ResponderParams
       ListTeamMembersResponder => { command: "list editors", team_id: 3824115 },
       ExternalStartReviewResponder => { external_call: { url: "https://github.com/openjournals" }},
       UpdateCommentResponder => { command: "list final steps", template_file: "final-steps.md" },
+
+      # NeuroLibre's responders declare required_params but were never
+      # registered here, so instantiating them in the shared responder specs
+      # raised a configuration error.
+      Neurolibre::BinderBuildResponder            => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::BuildBookResponder              => { data_from_issue: ["target-repository"] },
+      Neurolibre::BuildExtendedPdfResponder       => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::BuildForkedBookResponder        => { data_from_issue: ["target-repository"] },
+      Neurolibre::CacheDataResponder              => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::PreprintServerStatusResponder   => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::PreprintSyncBookResponder       => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::PreprintSyncDataResponder       => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::PreprintSyncPdfResponder        => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::PreviewServerStatusResponder    => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::ProductionStartResponder        => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::SyncMystResponder               => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::ZenodoCreateBucketsResponder    => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::ZenodoFlushResponder            => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::ZenodoPublishResponder          => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::ZenodoStatusResponder           => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::ZenodoUploadBookResponder       => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::ZenodoUploadDataResponder       => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::ZenodoUploadDockerResponder     => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::ZenodoUploadMystResponder       => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::ZenodoUploadRepositoryResponder => { external_call: { url: "https://neurolibre.org" } },
     }
 
     params_by_responder[responder_class] || {}
