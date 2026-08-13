@@ -450,34 +450,10 @@ buffy:
         mapping:
           id: issue_id
         silent: false
-    neurolibre_build_book:
-      data_from_issue:
-      - branch
-      - target-repository
-      - issue_id
-    neurolibre_build_forked_book:
-      data_from_issue:
-      - branch
-      - target-repository
-      - issue_id
     neurolibre_preprint_sync_data:
       only: editors
       external_call:
         url: "https://preprint.neurolibre.org/api/data/sync"
-        method: "post"
-        headers:
-          username: <%= ENV['PREVIEW_API_USER'] %>
-          password: <%= ENV['PREVIEW_API_KEY'] %>
-        data_from_issue:
-          - target-repository
-        mapping:
-          id: issue_id
-          repository_url: target-repository
-        silent: true
-    neurolibre_preprint_sync_book:
-      only: editors
-      external_call:
-        url: "https://preprint.neurolibre.org/api/book/sync"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
@@ -537,20 +513,6 @@ buffy:
           password: <%= ENV['PREVIEW_API_KEY'] %>
         mapping:
           id: issue_id
-    neurolibre_zenodo_upload_book:
-      only: editors
-      external_call:
-        url: "https://preprint.neurolibre.org/api/zenodo/upload/book"
-        method: "post"
-        headers:
-          username: <%= ENV['PREVIEW_API_USER'] %>
-          password: <%= ENV['PREVIEW_API_KEY'] %>
-        data_from_issue:
-          - target-repository
-        mapping:
-          id: issue_id
-          repository_url: target-repository
-        silent: true
     neurolibre_zenodo_upload_repository:
       only: editors
       external_call:
