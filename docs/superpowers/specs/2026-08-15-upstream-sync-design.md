@@ -59,12 +59,68 @@ instantiates and has a non-empty `default_description` and
 `process_message` dispatches.
 
 Upstream's 132 commits touch `app/lib/responder.rb`,
-`app/workers/buffy_worker.rb`, `app/workers/external_service_worker.rb`, and
-`app/lib/utilities.rb` — the base classes all 20 NeuroLibre responders inherit
-from. Git merges those cleanly and silently. Nothing in the suite would report
-a behavioral shift underneath the NeuroLibre surface.
+`app/workers/buffy_worker.rb`, `app/lib/utilities.rb`, and `app/lib/github.rb`
+— base classes all 20 NeuroLibre responders inherit from. (Not
+`external_service_worker.rb`; see the outbound-contract audit below.) Git
+merges those cleanly and silently. Nothing in the suite would report a
+behavioral shift underneath the NeuroLibre surface.
 
 The safety net therefore comes first, and the merge second.
+
+### The outbound contract with the NeuroLibre app
+
+Everything NeuroLibre does beyond posting comments — paper deposit, zenodo,
+binder builds, myst sync, preprint sync — leaves through
+`ExternalServiceWorker#perform`. That contract must survive the merge intact.
+Audited 2026-08-15:
+
+**Structurally well insulated.** Upstream has made **zero** changes to
+`app/workers/external_service_worker.rb` since the fork. All three NeuroLibre
+customizations in it are untouched by upstream:
+
+- Basic auth: `username`/`password` headers collapsed into
+  `Authorization: Basic <base64>` (`:41-45`)
+- `send_only_mapped`: send only `mapping` keys, and only when present (`:23-26`)
+- the `target-repository` strip when an `Authorization` header is present,
+  commented "required temporary solution for python compatibility" (`:54-56`)
+
+`config/settings-production.yml`, which defines every NeuroLibre service call,
+is likewise untouched by upstream. `app/lib/github.rb` — the GitHub Actions
+path — changed by exactly one *additive* method (`react_to_comment`);
+`trigger_workflow` is untouched.
+
+**But untested.** `spec/workers/external_service_worker_spec.rb` is upstream's
+and covers none of the three customizations. The wire format is therefore
+protected by nothing but the fact that upstream has not yet touched that file.
+
+**One upstream change reaches the payload assembly.** Upstream adds
+`issue_title` to `Responder#locals` (`app/lib/responder.rb:184`). It cannot
+reach the wire — the request body is built only from `query_params`,
+`data_from_issue`, and `mapping`, never from locals wholesale — but that is an
+argument, not a test, and the plan pins it with one.
+
+The plan therefore adds a dedicated task pinning the exact URL, method,
+headers, and JSON body for each service *shape* in `settings-production.yml`,
+in a **new spec file** rather than extending upstream's — editing upstream's
+would grow the shared conflict surface from 8 files to 9.
+
+### Upstream changes that do alter NeuroLibre-visible behavior
+
+Two, both in upstream-owned code we never modified, so both merge cleanly and
+land silently:
+
+1. **`run_gitinspector` is deleted** from `utilities.rb`, along with its caller
+   in `repo_checks_worker.rb` and its specs. The software report posted by repo
+   checks loses its gitinspector section. Consistent and intentional upstream;
+   a visible change to bot output, not to the NeuroLibre API.
+2. **`clone_repo` and `change_branch` are hardened** — argv-form `Open3` calls
+   instead of shell interpolation, `clone_repo` now requires an http/https
+   scheme, and `change_branch` rejects any branch not matching
+   `/\A(?!-)[\w.\-\/]+\z/`. These are command-injection fixes. They affect
+   `BuffyWorker#prepare_local_repo`, used by repo checks. NeuroLibre's own
+   worker (`NeurolibreBookBuildTestWorker`) does not clone at all — it POSTs to
+   the NeuroLibre API — so the deposit path is unaffected. A review branch with
+   an unusual name would now be rejected where it previously worked.
 
 ## Non-goals
 
@@ -88,8 +144,8 @@ action, not the implementer's.
 
 ### Phase 1 — `spec/neurolibre-characterization`
 
-Characterization specs for the 20 NeuroLibre responders. **No production code
-changes.** Lands green on top of today's `main` so the baseline exists before
+Characterization specs for the 20 NeuroLibre responders, plus the outbound
+wire contract in `ExternalServiceWorker`. **No production code changes.** Lands green on top of today's `main` so the baseline exists before
 anything upstream moves.
 
 Independently valuable: if the merge is deferred, the tests still stand.
@@ -177,7 +233,8 @@ responder here.
 
 ### Expected outcome
 
-~75–90 new examples. Suite goes from 774 to roughly 850.
+~85–100 new examples across the responders, plus ~9 pinning the outbound
+request. Suite goes from 774 to roughly 970.
 
 ### Policy on suspect behavior
 
@@ -237,7 +294,7 @@ small enough to name explicitly.
 
 ## Verification
 
-- **Phase 1:** suite green, ~850 examples. New specs must fail if base-class
+- **Phase 1:** suite green, ~970 examples. New specs must fail if base-class
   dispatch behavior changes — verified by temporarily breaking
   `process_external_service` and confirming red.
 - **Phase 2:** same suite, same count, still green after the merge. Any

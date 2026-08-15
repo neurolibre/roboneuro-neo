@@ -4,7 +4,7 @@
 
 **Goal:** Build a characterization test suite for the 20 NeuroLibre responders, then merge 132 upstream buffy commits behind it without silent behavior loss.
 
-**Architecture:** Two phases in strict order. Phase 1 (Tasks 1–7) adds specs only, no production code, establishing a green baseline that will fail loudly if upstream changes base-class dispatch. Phase 2 (Tasks 8–11) adds `upstream` as a permanent remote, merges, and resolves five conflicts under a pre-agreed policy.
+**Architecture:** Two phases in strict order. Phase 1 (Tasks 1–8) adds specs only, no production code, establishing a green baseline that will fail loudly if upstream changes base-class dispatch or the outbound request sent to the NeuroLibre app. Phase 2 (Tasks 9–12) adds `upstream` as a permanent remote, merges, and resolves five conflicts under a pre-agreed policy.
 
 **Tech Stack:** Ruby 3.3.12, Sinatra 4.1.1, RSpec, Sidekiq (`sidekiq/testing`), WebMock, Rack::Test.
 
@@ -19,6 +19,7 @@
 - Bot name in all specs is `botsci`, matching existing suite convention.
 - **Phase 1 changes no file under `app/`.** If a Phase 1 task appears to need a production change, stop and report instead.
 - Characterization policy: assert what the code does **today**, even where it looks wrong. Mark suspect spots with a `# SUSPECT:` comment. Never fix inline.
+- **The outbound contract with the NeuroLibre app is inviolable.** The exact URL, HTTP method, headers, and JSON body that `ExternalServiceWorker` sends must be byte-identical before and after the merge. Task 6 pins it; Task 7 proves the pin works. If the merge changes any of it, stop and report — do not adjust a spec to accommodate it.
 - Never push, never merge a PR, never deploy. Branches and commits are local; the maintainer merges.
 
 ---
@@ -796,18 +797,226 @@ git commit -m "Characterize the COAR responder"
 
 ---
 
-### Task 6: Prove the tripwire actually trips
+### Task 6: Pin the outbound wire contract to the NeuroLibre app
+
+**Files:**
+- Create: `spec/workers/neurolibre_external_service_worker_spec.rb`
+- Read first: `app/workers/external_service_worker.rb`, `config/settings-production.yml`
+
+**Interfaces:**
+- Consumes: `CommonActions#disable_github_calls_for`.
+- Produces: the assertions that guarantee the NeuroLibre API keeps receiving byte-identical requests across the merge.
+
+Context — this is the task that protects paper deposit and every other NeuroLibre service call.
+
+Tasks 1–5 stop at `ExternalServiceWorker.perform_async`. The actual HTTP request is built inside `ExternalServiceWorker#perform`, and **three of the steps that build it are NeuroLibre-only customizations with zero existing coverage**:
+
+1. **Basic auth** (`app/workers/external_service_worker.rb:41-45`) — `username`/`password` headers are collapsed into a single `Authorization: Basic <base64>` header and the originals deleted. Every NeuroLibre service in `settings-production.yml` uses this.
+2. **`send_only_mapped`** (`:23-26`) — when set, only `mapping` keys are sent, and only when present in locals. Used by roughly half the NeuroLibre services.
+3. **The `target-repository` deletion** (`:54-56`) — when an `Authorization` header is present, `target-repository` is stripped from the payload, commented "required temporary solution for python compatibility."
+
+`spec/workers/external_service_worker_spec.rb` (upstream's) covers none of the three — `grep -c` for any of them returns 0.
+
+**Write this in a NEW file rather than extending upstream's spec.** Upstream's `external_service_worker_spec.rb` is currently *not* one of the 8 both-changed files; editing it would make it one and create a conflict every future sync. A separate file keeps the shared surface at 8.
+
+- [ ] **Step 1: Write the wire-contract spec**
+
+```ruby
+require_relative "../spec_helper.rb"
+
+# NeuroLibre-specific characterization of ExternalServiceWorker's outbound
+# request. These assertions are the contract with the NeuroLibre app
+# (paper deposit, zenodo, binder, myst sync). Upstream has not touched this
+# worker since the 2023 fork, but the payload fed into it is assembled by
+# base-class code upstream does change, so the exact bytes are pinned here.
+#
+# Deliberately in its own file: upstream owns external_service_worker_spec.rb
+# and editing it would add a 9th file to the shared conflict surface.
+describe ExternalServiceWorker do
+
+  let(:null_response) { OpenStruct.new(status: 700, body: "no reply") }
+  let(:worker) { described_class.new }
+
+  before { disable_github_calls_for(worker) }
+
+  describe "NeuroLibre basic auth" do
+    let(:service) do
+      { 'name' => 'zenodo publish',
+        'url' => 'https://preprint.neurolibre.org/api/zenodo/publish',
+        'method' => 'post',
+        'headers' => { 'username' => 'neuro', 'password' => 's3cret' } }
+    end
+
+    it "should collapse username and password into an Authorization header" do
+      expected_headers = { 'Content-Type' => 'application/json',
+                           'Accept' => 'application/json',
+                           'Authorization' => "Basic " + Base64.strict_encode64("neuro:s3cret") }
+
+      expect(Faraday).to receive(:post).with(service['url'], "{}", expected_headers).and_return(null_response)
+      worker.perform(service, { 'bot_name' => 'botsci', 'issue_id' => 33 })
+    end
+
+    it "should not leak the raw username or password" do
+      expect(Faraday).to receive(:post) do |_url, _body, headers|
+        expect(headers).to_not have_key('username')
+        expect(headers).to_not have_key('password')
+        null_response
+      end
+      worker.perform(service, { 'bot_name' => 'botsci', 'issue_id' => 33 })
+    end
+
+    it "should leave headers alone when only one of username or password is set" do
+      partial = service.merge('headers' => { 'username' => 'neuro' })
+      expected_headers = { 'Content-Type' => 'application/json',
+                           'Accept' => 'application/json',
+                           'username' => 'neuro' }
+
+      expect(Faraday).to receive(:post).with(service['url'], "{}", expected_headers).and_return(null_response)
+      worker.perform(partial, { 'bot_name' => 'botsci', 'issue_id' => 33 })
+    end
+  end
+
+  describe "the target-repository strip" do
+    # SUSPECT: commented in the worker as a "required temporary solution for
+    # python compatibility". It fires whenever an Authorization header is
+    # present, which is every NeuroLibre service.
+    let(:service) do
+      { 'name' => 'zenodo publish',
+        'url' => 'https://preprint.neurolibre.org/api/zenodo/publish',
+        'method' => 'post',
+        'headers' => { 'username' => 'neuro', 'password' => 's3cret' },
+        'data_from_issue' => ['target-repository'],
+        'mapping' => { 'id' => 'issue_id', 'repository_url' => 'target-repository' } }
+    end
+
+    let(:locals) do
+      { 'bot_name' => 'botsci',
+        'issue_id' => 33,
+        'repo' => 'neurolibre/reviews',
+        'sender' => 'tester',
+        'target-repository' => 'https://github.com/neurolibre/example' }
+    end
+
+    it "should send id and repository_url but drop target-repository" do
+      expected_body = { 'id' => 33,
+                        'repository_url' => 'https://github.com/neurolibre/example' }.to_json
+
+      expect(Faraday).to receive(:post).with(service['url'], expected_body, hash_including('Authorization')).and_return(null_response)
+      worker.perform(service, locals)
+    end
+
+    it "should keep target-repository when there is no auth header" do
+      no_auth = service.reject { |k, _| k == 'headers' }
+      expect(Faraday).to receive(:post) do |_url, body, _headers|
+        expect(JSON.parse(body)).to have_key('target-repository')
+        null_response
+      end
+      worker.perform(no_auth, locals)
+    end
+  end
+
+  describe "send_only_mapped" do
+    let(:service) do
+      { 'name' => 'binder build',
+        'url' => 'https://preprint.neurolibre.org/api/book/build',
+        'method' => 'post',
+        'headers' => { 'username' => 'neuro', 'password' => 's3cret' },
+        'data_from_issue' => ['repo', 'sender'],
+        'mapping' => { 'id' => 'issue_id', 'repository_url' => 'target-repository' },
+        'send_only_mapped' => true }
+    end
+
+    let(:locals) do
+      { 'bot_name' => 'botsci',
+        'issue_id' => 33,
+        'repo' => 'neurolibre/reviews',
+        'sender' => 'tester',
+        'target-repository' => 'https://github.com/neurolibre/example' }
+    end
+
+    it "should send only the mapped keys and ignore data_from_issue" do
+      expected_body = { 'id' => 33,
+                        'repository_url' => 'https://github.com/neurolibre/example' }.to_json
+
+      expect(Faraday).to receive(:post).with(service['url'], expected_body, hash_including('Authorization')).and_return(null_response)
+      worker.perform(service, locals)
+    end
+
+    it "should omit a mapped key that is absent from locals" do
+      thin_locals = { 'bot_name' => 'botsci', 'issue_id' => 33 }
+      expected_body = { 'id' => 33 }.to_json
+
+      expect(Faraday).to receive(:post).with(service['url'], expected_body, hash_including('Authorization')).and_return(null_response)
+      worker.perform(service, thin_locals)
+    end
+  end
+
+  describe "extra keys in locals" do
+    # Upstream's merge adds issue_title to Responder#locals. This example
+    # pins the fact that unmapped locals keys do NOT reach the wire, which
+    # is what keeps that addition from changing the NeuroLibre payload.
+    it "should not put unmapped locals keys into the request body" do
+      service = { 'name' => 'zenodo status',
+                  'url' => 'https://preprint.neurolibre.org/api/zenodo/status',
+                  'method' => 'post',
+                  'headers' => { 'username' => 'neuro', 'password' => 's3cret' },
+                  'mapping' => { 'id' => 'issue_id' } }
+      locals = { 'bot_name' => 'botsci',
+                 'issue_id' => 33,
+                 'issue_title' => '[REVIEW]: Something',
+                 'repo' => 'neurolibre/reviews' }
+
+      expect(Faraday).to receive(:post) do |_url, body, _headers|
+        expect(JSON.parse(body)).to eq({ 'id' => 33 })
+        null_response
+      end
+      worker.perform(service, locals)
+    end
+  end
+end
+```
+
+- [ ] **Step 2: Run the file**
+
+Run: `CUSTOM_RUBY_VERSION=3.3.3 bundle exec rspec spec/workers/neurolibre_external_service_worker_spec.rb --no-color`
+
+Expected: PASS, 9 examples.
+
+Written from a close read, not from a run. If an expectation fails, the spec is wrong — read the actual request the worker builds and encode it. Note the worker calls `Logger.new(STDOUT).warn(parameters.to_json)` on every POST, so expect log noise in the output; that is current behavior, not a failure.
+
+- [ ] **Step 3: Cross-check against the real production config**
+
+The three services stubbed above are simplified. Confirm the shapes match reality:
+
+```bash
+grep -n "external_call" -A 20 config/settings-production.yml | grep -n "send_only_mapped\|mapping:\|data_from_issue" | head -30
+```
+
+If a real NeuroLibre service uses a shape none of the examples cover — a `query_params` block, a GET method, or a `mapping` onto a nested value — add an example for it. The goal is that every distinct *shape* in `settings-production.yml` has at least one pinned example.
+
+- [ ] **Step 4: Run the full suite and commit**
+
+```bash
+CUSTOM_RUBY_VERSION=3.3.3 bundle exec rspec --no-color   # expect 968 examples, 0 failures, 6 pending
+git add spec/workers/neurolibre_external_service_worker_spec.rb
+git commit -m "Pin the outbound NeuroLibre service request contract"
+```
+
+---
+
+### Task 7: Prove the tripwire actually trips
 
 **Files:**
 - Temporarily modify then revert: `app/lib/responder.rb:212-217`
+- Temporarily modify then revert: `app/workers/external_service_worker.rb:41`
 
 **Interfaces:**
-- Consumes: every spec from Tasks 1–5.
+- Consumes: every spec from Tasks 1–6.
 - Produces: confidence that Phase 2 is verifiable. Nothing importable.
 
 Context: a characterization suite that passes no matter what is worse than none, because it produces false confidence. This task verifies the suite fails when base-class dispatch breaks — which is precisely the failure mode the upstream merge could introduce.
 
-**This is the one task that touches `app/`, and it reverts before it commits.**
+**This is the one task that touches `app/`, and every change it makes is reverted before it finishes. It makes two breaks in sequence: one on the payload-assembly side, one on the wire side.**
 
 - [ ] **Step 1: Record the green baseline**
 
@@ -836,39 +1045,61 @@ Expected: at least 15 failures, all in `external_call_responders_spec.rb`, all o
 
 If the suite stays green, the Tier 1 dispatch assertion is not doing its job. Fix the spec, then repeat from Step 2.
 
-- [ ] **Step 4: Revert the break**
+- [ ] **Step 4: Revert the first break**
 
 ```bash
 git checkout app/lib/responder.rb
 git diff --stat
 ```
 
-Expected: empty diff. `app/` must be untouched.
+Expected: empty diff.
 
-- [ ] **Step 5: Confirm green again**
+- [ ] **Step 5: Break the wire contract**
 
-Run: `CUSTOM_RUBY_VERSION=3.3.3 bundle exec rspec --no-color 2>&1 | tail -3`
+The second tripwire, and the one that matters for the NeuroLibre app. In `app/workers/external_service_worker.rb`, disable the Basic auth collapse by changing line 41's condition:
 
-Expected: same count as Step 1, 0 failures.
+```ruby
+    if false && headers['username'] && headers['password']   # TRIPWIRE TEST
+```
 
-- [ ] **Step 6: Record the result**
+- [ ] **Step 6: Confirm the wire specs go red**
 
-Append to `docs/upstream-sync.md` (created in Task 11; if it does not exist yet, hold this note for that task):
+Run: `CUSTOM_RUBY_VERSION=3.3.3 bundle exec rspec spec/workers/neurolibre_external_service_worker_spec.rb --no-color 2>&1 | tail -20`
 
-> The Tier 1 dispatch assertion was verified to fail when
-> `Responder#process_external_service` drops its locals. 15 examples go red.
+Expected: at least 5 failures in `neurolibre_external_service_worker_spec.rb` — the auth examples, plus the `target-repository` strip examples, since that strip is conditioned on the `Authorization` header existing.
+
+If those stay green, the wire contract is not actually pinned and Task 6 needs fixing before Phase 2 starts.
+
+- [ ] **Step 7: Revert and confirm green**
+
+```bash
+git checkout app/workers/external_service_worker.rb
+git diff --stat        # must be empty
+CUSTOM_RUBY_VERSION=3.3.3 bundle exec rspec --no-color 2>&1 | tail -3
+```
+
+Expected: empty diff, and the same count as Step 1 with 0 failures.
+
+- [ ] **Step 8: Record both results**
+
+Append to `docs/upstream-sync.md` (created in Task 12; if it does not exist yet, hold this note for that task):
+
+> Both tripwires were verified before the 2026-08 merge:
+> - Dropping locals in `Responder#process_external_service` turns 15 examples red.
+> - Disabling the Basic auth collapse in `ExternalServiceWorker` turns the
+>   NeuroLibre wire-contract examples red.
 
 No commit — nothing changed on disk.
 
 ---
 
-### Task 7: Suspect-behavior report
+### Task 8: Suspect-behavior report
 
 **Files:**
 - Create: `docs/neurolibre-responder-notes.md`
 
 **Interfaces:**
-- Consumes: the `# SUSPECT:` comments left in Tasks 1–5.
+- Consumes: the `# SUSPECT:` comments left in Tasks 1–6.
 - Produces: a decision list for the maintainer. No code depends on it.
 
 Context: characterization policy says flag, never fix. This is where the flags are collected so they are a reviewable list rather than comments scattered across five files.
@@ -907,11 +1138,11 @@ git commit -m "Record suspect behaviors found while characterizing responders"
 
 Phase 1 is complete. Open a PR from this branch into `roboneuro/test` and hand it to the maintainer.
 
-Do not begin Task 8 until the maintainer confirms Phase 1 is merged. Phase 2 rests on this baseline.
+Do not begin Task 9 until the maintainer confirms Phase 1 is merged. Phase 2 rests on this baseline.
 
 ---
 
-### Task 8: Add the upstream remote and take the merge
+### Task 9: Add the upstream remote and take the merge
 
 **Files:**
 - Modify: `.git/config` (via `git remote add`)
@@ -973,7 +1204,7 @@ Our matrix pins exact versions `['3.3.12', '3.4.10']` because the Gemfile declar
 
 - [ ] **Step 6: Do NOT commit yet**
 
-`Gemfile.lock` and `app/lib/doi_checker.rb` remain conflicted. Tasks 9 and 10 handle them. Confirm:
+`Gemfile.lock` and `app/lib/doi_checker.rb` remain conflicted. Tasks 10 and 11 handle them. Confirm:
 
 ```bash
 git status --short | grep "^UU\|^AA"
@@ -983,14 +1214,14 @@ Expected: exactly `Gemfile.lock` and `app/lib/doi_checker.rb`.
 
 ---
 
-### Task 9: Integrate the `doi_checker.rb` conflict
+### Task 10: Integrate the `doi_checker.rb` conflict
 
 **Files:**
 - Resolve: `app/lib/doi_checker.rb`
 - Test: `spec/doi_checker_spec.rb` (existing) — check whether upstream added cases
 
 **Interfaces:**
-- Consumes: the in-progress merge from Task 8.
+- Consumes: the in-progress merge from Task 9.
 - Produces: a `DOIChecker` carrying both upstream's structure and our Crossref resilience.
 
 Context: **the only conflict requiring real thought.** Upstream restructured `check_dois` into `handle_special_case` / `handle_missing_doi` and added a `:skip` validity category. Our Crossref work — the polite-pool `Serrano.configuration`, the `MultiJson::ParseError` retry with backoff, and `CROSSREF_LOOKUP_DELAY` between lookups — was written inside the old structure. Neither side wins; ours gets re-applied onto theirs.
@@ -1087,13 +1318,13 @@ git add app/lib/doi_checker.rb
 
 ---
 
-### Task 10: Regenerate the lockfile and land the merge
+### Task 11: Regenerate the lockfile and land the merge
 
 **Files:**
 - Resolve: `Gemfile.lock`
 
 **Interfaces:**
-- Consumes: resolved `Gemfile` (Task 8) and `doi_checker.rb` (Task 9).
+- Consumes: resolved `Gemfile` (Task 9) and `doi_checker.rb` (Task 10).
 - Produces: the merge commit.
 
 Context: the lockfile is generated, never hand-merged. Upstream's was produced by bundler 4.0.6 on Ruby 4; ours must be produced under our own pin.
@@ -1137,6 +1368,10 @@ Expected: **the same example count as the end of Phase 1, 0 failures, 6 pending.
 
 A failure here is the entire point of the plan. Do not adjust a spec to make it pass — read what changed upstream, decide whether the new behavior is acceptable, and record the decision. If a NeuroLibre spec fails, that is a real regression the merge introduced; stop and report it rather than papering over it.
 
+**A failure in `spec/workers/neurolibre_external_service_worker_spec.rb` is a hard stop.** That file is the contract with the NeuroLibre app. If it goes red, the merge changes what paper deposit and every other service receives, and the merge does not proceed until the cause is understood and the payload restored.
+
+One known upstream change to check explicitly here: upstream adds `issue_title` to `Responder#locals` (`app/lib/responder.rb:184`). Analysis says it cannot reach the wire, because the request body is built only from `query_params`, `data_from_issue`, and `mapping` — never from locals wholesale. The "extra keys in locals" example in Task 6 is what proves that claim. Confirm it is green rather than assuming it.
+
 - [ ] **Step 5: Commit the merge**
 
 ```bash
@@ -1163,7 +1398,7 @@ Resolutions:
 
 ---
 
-### Task 11: Sync documentation and the smoke checklist
+### Task 12: Sync documentation and the smoke checklist
 
 **Files:**
 - Create: `docs/upstream-sync.md`
@@ -1205,12 +1440,28 @@ git merge upstream/main
 
 A numbered list to run against a scratch preprint repo on the staging deploy, each item naming the command, the expected bot reply, and where to look if it fails (Heroku logs, Sidekiq dashboard):
 
-1. `@roboneuro preview server status` — expect a status reply
-2. `@roboneuro production build runtime` — expect a build to start
-3. `@roboneuro production sync myst` — expect a sync confirmation
-4. `@roboneuro production sync data` — expect a sync confirmation
-5. `@roboneuro zenodo status` — expect a status table
-6. `@roboneuro coar <subcommand>` — expect the COAR flow to respond
+1. `@roboneuro preview server status` — expect a status reply. **This is the
+   single most informative check**: it is one of only two commands that sends
+   editor and reviewer identity, so a success here exercises `user_login`,
+   the Basic auth header, and the payload assembly all at once.
+2. `@roboneuro preprint server status` — same, against the production server.
+3. `@roboneuro production build runtime` — expect a build to start
+4. `@roboneuro production sync myst` — expect a sync confirmation
+5. `@roboneuro production sync data` — expect a sync confirmation
+6. `@roboneuro zenodo status` — expect a status table
+7. `@roboneuro zenodo create buckets` — the paper-deposit entry point; expect
+   buckets to be created against a scratch record
+8. `@roboneuro coar <subcommand>` — expect the COAR flow to respond
+9. A GitHub Action responder command, if the review config uses one — confirms
+   `trigger_workflow` still fires
+
+For items 1–7, do not stop at "the bot replied." Confirm in the **Heroku logs**
+that the request the NeuroLibre app received is the one it expected: the worker
+logs the outgoing body on every POST (`Logger.new(STDOUT).warn(parameters.to_json)`
+in `external_service_worker.rb`). A 200 with a silently different payload is the
+exact failure this whole plan exists to catch, and the bot reply alone will not
+show it. Compare a logged body against one captured from production *before* the
+merge.
 
 State explicitly at the top:
 
