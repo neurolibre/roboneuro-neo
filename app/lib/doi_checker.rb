@@ -57,6 +57,14 @@ class DOIChecker
   # If there's no DOI present, check Crossref to see if we can find a candidate DOI for this entry.
   def handle_missing_doi(entry)
     candidate_doi = crossref_lookup(entry.title.value)
+
+    # Throttle sequential Crossref lookups. This used to live at the end of the
+    # title branch in check_dois; upstream moved that branch into this method,
+    # so the delay moves with it. Without it, a bib file with many DOI-less
+    # entries fires lookups back to back and trips Crossref's rate limit --
+    # which surfaces as CROSSREF-ERROR noise rather than a clean failure.
+    sleep(CROSSREF_LOOKUP_DELAY)
+
     truncated_title = entry.title.to_s[0,50]
     truncated_title += "..." if truncated_title.length < entry.title.to_s.length
     if candidate_doi == "CROSSREF-ERROR"

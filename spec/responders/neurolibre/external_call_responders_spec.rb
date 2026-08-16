@@ -93,14 +93,22 @@ describe "NeuroLibre external call responders" do
 
         it "should dispatch with the serialized config and locals" do
           expected_params = { "url" => "https://neurolibre.org" }
-          # These five keys come from Responder#locals. None of these
-          # responders override it, so reviewers_logins / editor_login are
-          # defined but never reach the worker.
+          # These keys come from Responder#locals. None of these responders
+          # override it, so reviewers_logins / editor_login are defined but
+          # never reach the worker.
           # SUSPECT: reviewers_logins, editor_login and title_regex are
           # defined on every one of these responders and used by none.
+          #
+          # issue_title arrived with the 2026-08 upstream merge, which added it
+          # to Responder#locals. It reaches the worker but NOT the wire: the
+          # request body is built only from query_params, data_from_issue and
+          # mapping, never from locals wholesale. See the "extra keys in locals"
+          # example in spec/workers/neurolibre_external_service_worker_spec.rb,
+          # which is what proves the NeuroLibre API payload is unaffected.
           expected_locals = { "bot_name" => "botsci",
                               "issue_author" => "opener",
                               "issue_id" => 33,
+                              "issue_title" => "[REVIEW]: Test",
                               "repo" => "neurolibre/reviews",
                               "sender" => "tester" }
 

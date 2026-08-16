@@ -54,9 +54,14 @@ describe Neurolibre::PreviewServerStatusResponder do
     # implementation end to end.
     it "should dispatch editor and reviewer identity alongside the base locals" do
       expected_params = { "url" => "https://neurolibre.org" }
+      # issue_title arrived with the 2026-08 upstream merge (added to
+      # Responder#locals). It reaches the worker but not the wire — see the
+      # "extra keys in locals" example in
+      # spec/workers/neurolibre_external_service_worker_spec.rb.
       expected_locals = { "bot_name" => "botsci",
                           "issue_author" => "opener",
                           "issue_id" => 33,
+                          "issue_title" => "[REVIEW]: Test",
                           "repo" => "neurolibre/reviews",
                           "sender" => "tester",
                           "reviewers_usernames" => ["@xuanxu", "@karthik"],
