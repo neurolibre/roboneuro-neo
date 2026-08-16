@@ -6,7 +6,14 @@ require_relative "../../spec_helper.rb"
 # behavior, which is exactly what an upstream merge can silently change.
 describe "NeuroLibre external call responders" do
 
-  EXTERNAL_CALL_RESPONDERS = {
+  # A plain local variable, not a constant. Constants assigned inside a
+  # `describe` block (even nested inside a `module` keyword written here)
+  # still bind to the file's top-level lexical scope, i.e. Object, because
+  # `describe`'s block does not introduce a new lexical scope for constant
+  # lookup. A bare/nested constant here would leak globally and risk
+  # colliding with sibling spec files under spec/responders/neurolibre/.
+  # A local variable closes over this block only and never touches Object.
+  external_call_responders = {
     Neurolibre::BinderBuildResponder =>
       { keyname: :neurolibre_binder_build,           command: "production build runtime" },
     Neurolibre::BuildExtendedPdfResponder =>
@@ -39,7 +46,7 @@ describe "NeuroLibre external call responders" do
       { keyname: :neurolibre_zenodo_upload_repository, command: "zenodo upload repository" }
   }.freeze
 
-  EXTERNAL_CALL_RESPONDERS.each_pair do |responder_class, info|
+  external_call_responders.each_pair do |responder_class, info|
 
     describe responder_class.name do
 
