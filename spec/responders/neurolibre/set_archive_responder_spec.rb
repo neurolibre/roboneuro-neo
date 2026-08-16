@@ -96,5 +96,13 @@ describe Neurolibre::SetArchiveResponder do
       expect(responder).to receive(:respond).with("That doesn't look like a valid DOI value")
       responder.process_message("")
     end
+
+    it "should reject a status 200 response as an invalid DOI" do
+      match!("@botsci set 10.5281/zenodo.6861996 as data archive")
+      expect(Faraday).to receive(:head).with("https://doi.org/10.5281/zenodo.6861996").and_return(double(status: 200))
+      expect(responder).to_not receive(:update_value)
+      expect(responder).to receive(:respond).with("That doesn't look like a valid DOI value")
+      responder.process_message("")
+    end
   end
 end
