@@ -18,6 +18,11 @@ gem 'serrano'
 gem 'rexml'
 gem 'github-linguist'
 gem 'licensee'
+# Declared explicitly because app/workers/repo_checks_worker.rb calls
+# Rugged::Repository directly. It used to arrive transitively via licensee,
+# but licensee 10 dropped it as a required dependency, so relying on that
+# would leave the call one upstream bump away from a runtime NameError.
+gem 'rugged'
 gem 'issue'
 gem 'chronic'
 gem 'ostruct'
