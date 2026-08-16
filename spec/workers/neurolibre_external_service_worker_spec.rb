@@ -85,11 +85,31 @@ describe ExternalServiceWorker do
 
     it "should keep target-repository when there is no auth header" do
       no_auth = service.reject { |k, _| k == 'headers' }
-      expect(Faraday).to receive(:post) do |_url, body, _headers|
-        expect(JSON.parse(body)).to have_key('target-repository')
-        null_response
-      end
+      expected_body = { 'target-repository' => 'https://github.com/neurolibre/example',
+                        'id' => 33,
+                        'repository_url' => 'https://github.com/neurolibre/example' }.to_json
+      expected_headers = { 'Content-Type' => 'application/json', 'Accept' => 'application/json' }
+
+      expect(Faraday).to receive(:post).with(service['url'], expected_body, expected_headers).and_return(null_response)
       worker.perform(no_auth, locals)
+    end
+
+    it "should coerce a data_from_issue value that is absent from locals into an empty string, not a null" do
+      # Pins the `.to_s` on the `inputs_from_issue` loop (external_service_worker.rb:29).
+      # When the issue-extracted value isn't present in locals (nil), `.to_s`
+      # turns it into "" before it ever reaches JSON -- without the `.to_s`,
+      # the key would serialize as `null` instead. Both 'headers' (so the
+      # strip branch is out of the way) and 'target-repository' are removed
+      # from locals so this exercises the coercion in isolation.
+      no_auth = service.reject { |k, _| k == 'headers' }
+      locals_without_repo = locals.reject { |k, _| k == 'target-repository' }
+      expected_body = { 'target-repository' => '',
+                        'id' => 33,
+                        'repository_url' => nil }.to_json
+      expected_headers = { 'Content-Type' => 'application/json', 'Accept' => 'application/json' }
+
+      expect(Faraday).to receive(:post).with(service['url'], expected_body, expected_headers).and_return(null_response)
+      worker.perform(no_auth, locals_without_repo)
     end
   end
 

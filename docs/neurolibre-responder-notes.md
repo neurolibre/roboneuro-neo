@@ -203,6 +203,54 @@ services don't exercise this path, so changing it now only adds risk for no
 behavioral gain. Note it as a design gap to close if and when a GET service
 that uses `data_from_issue` is ever added.
 
+### B6. Every outbound POST payload is unconditionally logged to STDOUT via a fresh `Logger`
+
+`ExternalServiceWorker#perform`'s POST branch (`app/workers/external_service_worker.rb:57`)
+runs `Logger.new(STDOUT).warn(parameters.to_json)` immediately before every
+`Faraday.post` call, with no guard (`silent`, log level, feature flag, or
+otherwise) and no reuse of an existing logger — a new `Logger` object is
+allocated on every single call, purely to emit one line. Verified directly:
+the line is present and unconditional for every POST-branch invocation across
+all of section C's ~13 zenodo/binder/sync/production services plus every
+other POST service in `config/settings-production.yml`.
+
+**Why it looks wrong, two angles:**
+1. **Merge-conflict surface.** This is a NeuroLibre customization to a file
+   upstream also touches (the class itself, not this specific line, per the
+   file header note on this spec file). If the upstream 132-commit merge
+   restructures `ExternalServiceWorker#perform`, this line is exactly the
+   kind of unmarked one-liner that either silently disappears (losing the log)
+   or silently survives in the wrong place relative to refactored branches.
+   It has no `# @NeuroLibre` comment marking it as a customization, unlike the
+   basic-auth collapse (line 41-42, marked) and the target-repository strip
+   (line 52-53, marked) in the same method.
+2. **Payload contents on stdout.** `parameters` at that point is the fully
+   assembled outbound body — for the ~13 services in section C this is
+   `{"id":N,"repository_url":U}`, i.e. an issue ID and a repository URL,
+   logged in full to STDOUT on every call, unconditionally, regardless of
+   `service['silent']`. Whatever captures worker STDOUT (container logs, a
+   log aggregator) receives these repository URLs and issue IDs as a
+   byproduct of normal operation. Not a credential leak (headers, including
+   the Authorization header, are not part of `parameters`), but it is an
+   unbounded, unflagged sink for what is otherwise treated as
+   response-visibility-controlled data (contrast with `service['silent']`,
+   which exists specifically to suppress echoing `response.body` back to the
+   issue).
+
+**What fixing it would change:** removing the line, or gating it behind a
+level check / reusing a class-level logger, would stop one `Logger` allocation
+and one STDOUT write per outbound POST. No behavioral change to the request
+itself — this line only logs, it does not affect `parameters` before the
+`Faraday.post` call.
+
+**Recommendation:** low urgency, but worth a follow-up cleanup independent of
+the merge: (a) mark it `# @NeuroLibre` like the other two customizations in
+this method so the upstream diff doesn't silently swallow or duplicate it,
+and (b) replace the per-call `Logger.new(STDOUT)` with a shared logger instance
+gated at `debug`/`info` rather than `warn`, so it doesn't read as an error
+condition and doesn't allocate on every request. Do not change it during this
+characterization-only merge.
+
 ## C. What the wire actually carries for ~13 zenodo/binder/sync/production calls
 
 The single most load-bearing fact from this characterization work: of the 15

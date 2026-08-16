@@ -65,7 +65,8 @@ describe Neurolibre::CoarResponder do
       it "should ask for a service when none is given" do
         match!("@botsci coar request")
         allow(CoarNotify::Models::ServiceRegistry).to receive(:service_names).and_return(["prereview", "pci"])
-        expect(responder).to receive(:respond).with(/Please specify a service/)
+        expect(responder).to receive(:respond).with(
+          "❌ Please specify a service.\n\n**Usage:** `@botsci coar request from <service>`\n\n**Available services:** prereview, pci")
         expect(CoarNotify::Workers::SendWorker).to_not receive(:perform_async)
         responder.process_message("")
       end
@@ -74,7 +75,8 @@ describe Neurolibre::CoarResponder do
         match!("@botsci coar request from nosuchservice")
         allow(CoarNotify::Models::ServiceRegistry).to receive(:get).with("nosuchservice").and_return(nil)
         allow(CoarNotify::Models::ServiceRegistry).to receive(:service_names).and_return(["prereview"])
-        expect(responder).to receive(:respond).with(/Unknown service/)
+        expect(responder).to receive(:respond).with(
+          "❌ Unknown service: **nosuchservice**\n\n**Available services:** prereview")
         expect(CoarNotify::Workers::SendWorker).to_not receive(:perform_async)
         responder.process_message("")
       end
@@ -82,7 +84,8 @@ describe Neurolibre::CoarResponder do
       it "should enqueue a SendWorker for a known service" do
         match!("@botsci coar request from prereview")
         allow(CoarNotify::Models::ServiceRegistry).to receive(:get).with("prereview").and_return({ "name" => "PREreview" })
-        expect(responder).to receive(:respond).with(/Sending review request to \*\*PREreview\*\*/)
+        expect(responder).to receive(:respond).with(
+          "🔄 Sending review request to **PREreview**...\n\n_This may take a few moments._")
         expect(CoarNotify::Workers::SendWorker).to receive(:perform_async).with(33, "prereview", "request_review")
         responder.process_message("")
       end
@@ -130,6 +133,39 @@ describe Neurolibre::CoarResponder do
         expect(responder).to receive(:respond).with("ℹ️ No COAR notifications found for this issue.")
         responder.process_message("")
       end
+
+      it "should render the status table, covering every status_icon branch and the service_name fallback" do
+        match!("@botsci coar status")
+
+        notifications = [
+          double(direction: 'sent', status: 'processed', primary_type: 'ReviewRequest',
+                 service_name: 'prereview', created_at: Time.utc(2024, 3, 1, 9, 5)),
+          double(direction: 'received', status: 'failed', primary_type: 'RequestAccepted',
+                 service_name: nil, created_at: Time.utc(2024, 3, 2, 14, 30)),
+          double(direction: 'sent', status: 'processing', primary_type: 'ReviewRequest',
+                 service_name: 'pci', created_at: Time.utc(2024, 3, 3, 8, 0)),
+          double(direction: 'received', status: 'queued', primary_type: 'Acknowledgment',
+                 service_name: 'prereview', created_at: Time.utc(2024, 3, 4, 23, 59))
+        ]
+        allow(CoarNotify::Models::Notification).to receive(:where).and_return(
+          double(reverse_order: double(all: notifications)))
+
+        expected = [
+          "### COAR Notification Status",
+          "",
+          "| Direction | Type | Service | Status | Date |",
+          "|-----------|------|---------|--------|------|",
+          "| 📤 SENT | ReviewRequest | prereview | ✅ processed | 2024-03-01 09:05 |",
+          "| 📥 RECEIVED | RequestAccepted | N/A | ❌ failed | 2024-03-02 14:30 |",
+          "| 📤 SENT | ReviewRequest | pci | ⏳ processing | 2024-03-03 08:00 |",
+          "| 📥 RECEIVED | Acknowledgment | prereview | ⏸️ queued | 2024-03-04 23:59 |",
+          "",
+          "_Total notifications: 4_"
+        ].join("\n")
+
+        expect(responder).to receive(:respond).with(expected)
+        responder.process_message("")
+      end
     end
 
     describe "list" do
@@ -140,11 +176,39 @@ describe Neurolibre::CoarResponder do
         responder.process_message("")
       end
 
-      it "should list the configured services" do
+      it "should list the configured services, including the supported_patterns line" do
         match!("@botsci coar list")
         allow(CoarNotify::Models::ServiceRegistry).to receive(:all).and_return(
           { "prereview" => { "name" => "PREreview", "supported_patterns" => ["RequestReview"] } })
-        expect(responder).to receive(:respond).with(/\*\*prereview\*\* - PREreview/)
+
+        expected = [
+          "### Available COAR Services",
+          "",
+          "**prereview** - PREreview",
+          "  - Supported patterns: RequestReview",
+          "",
+          "_To request a review:_ `@botsci coar request from <service>`"
+        ].join("\n")
+
+        expect(responder).to receive(:respond).with(expected)
+        responder.process_message("")
+      end
+
+      it "should join multiple supported_patterns with a comma" do
+        match!("@botsci coar list")
+        allow(CoarNotify::Models::ServiceRegistry).to receive(:all).and_return(
+          { "pci" => { "name" => "PCI", "supported_patterns" => ["RequestReview", "RequestEndorsement"] } })
+
+        expected = [
+          "### Available COAR Services",
+          "",
+          "**pci** - PCI",
+          "  - Supported patterns: RequestReview, RequestEndorsement",
+          "",
+          "_To request a review:_ `@botsci coar request from <service>`"
+        ].join("\n")
+
+        expect(responder).to receive(:respond).with(expected)
         responder.process_message("")
       end
     end
@@ -152,7 +216,37 @@ describe Neurolibre::CoarResponder do
     describe "help" do
       it "should print the help text" do
         match!("@botsci coar help")
-        expect(responder).to receive(:respond).with(/COAR Notify Commands/)
+
+        expected = <<~HELP
+          ### COAR Notify Commands
+
+          **Request review from a service:**
+          ```
+          @botsci coar request from <service>
+          ```
+          Sends a review request to an external service (e.g., PREreview, PCI).
+
+          **Check notification status:**
+          ```
+          @botsci coar status
+          ```
+          Shows all COAR notifications for this issue.
+
+          **List available services:**
+          ```
+          @botsci coar list
+          ```
+          Lists all configured COAR services.
+
+          ---
+
+          **About COAR Notify:**
+          COAR Notify is a protocol for linking repository-based preprints with external review and endorsement services using standardized notifications.
+
+          Learn more: https://coar-notify.net
+        HELP
+
+        expect(responder).to receive(:respond).with(expected)
         responder.process_message("")
       end
     end
@@ -160,7 +254,8 @@ describe Neurolibre::CoarResponder do
     describe "an unknown subcommand" do
       it "should point at help" do
         match!("@botsci coar frobnicate")
-        expect(responder).to receive(:respond).with(/Unknown COAR command: `frobnicate`/)
+        expect(responder).to receive(:respond).with(
+          "❌ Unknown COAR command: `frobnicate`\n\nUse `@botsci coar help` for available commands.")
         responder.process_message("")
       end
     end
