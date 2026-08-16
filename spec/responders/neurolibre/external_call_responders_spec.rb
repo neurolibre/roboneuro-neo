@@ -108,6 +108,38 @@ describe "NeuroLibre external call responders" do
           responder.process_message("")
         end
       end
+
+      describe "guard paths" do
+        before do
+          responder.context = OpenStruct.new(issue_id: 33,
+                                             issue_author: "opener",
+                                             issue_title: "[REVIEW]: Test",
+                                             repo: "neurolibre/reviews",
+                                             sender: "tester",
+                                             issue_body: "")
+          disable_github_calls_for(responder)
+        end
+
+        it "should refuse when there are no reviewers" do
+          responder.context[:issue_body] = "<!--editor-->@arfon<!--end-editor-->"
+          expect(responder).to receive(:respond).with("Can't perform this without reviewers")
+          expect(responder).to_not receive(:process_external_service)
+          responder.process_message("")
+        end
+
+        it "should refuse when there is no editor" do
+          responder.context[:issue_body] = "<!--reviewers-list-->@xuanxu<!--end-reviewers-list-->"
+          expect(responder).to receive(:respond).with("Can't perform this without an editor")
+          expect(responder).to_not receive(:process_external_service)
+          responder.process_message("")
+        end
+
+        it "should not enqueue a worker when refusing" do
+          responder.context[:issue_body] = ""
+          allow(responder).to receive(:respond)
+          expect { responder.process_message("") }.to_not change(ExternalServiceWorker.jobs, :size)
+        end
+      end
     end
   end
 end
