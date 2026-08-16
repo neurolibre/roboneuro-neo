@@ -101,10 +101,14 @@ response, and the literal is accepted regardless.
 network-free bypass for a special sentinel value, but it isn't one — it's
 just a fallback accepted after a live HTTP call to `doi.org/N/A` (which will
 always fail or 404, since `N/A` is not a real DOI). No functional bug today
-(the outcome is still "accept N/A"), but it wastes a request per call and
-would silently start rejecting `N/A` if `doi.org` ever returned a 301/302 for
-that path by coincidence, or if `Faraday.head` started raising an error type
-`valid_doi_value?`'s bare `rescue` doesn't catch.
+(the outcome is still "accept N/A"), but it wastes a request per call. There
+is no status code that flips this into a rejection — if `doi.org` ever
+returned a 301/302 for `.../N/A`, `valid_doi_value?` would return `true` and
+short-circuit the `||`, which still accepts `N/A`, the same outcome as today.
+The one way the bypass genuinely fails to bypass is if `Faraday.head` raises
+a non-`StandardError` exception: `valid_doi_value?`'s bare `rescue` only
+catches `StandardError`, so such an exception would propagate out of
+`process_message` before the `|| new_value == "N/A"` clause is ever reached.
 
 **What fixing it would change:** reordering to
 `new_value == "N/A" || valid_doi_value?(new_value)` would short-circuit and
@@ -148,10 +152,12 @@ query_parameters.merge(mapped_parameters)`). Pinned in
 `spec/workers/neurolibre_external_service_worker_spec.rb` ("should still send
 query_params even though send_only_mapped is true"), which is exactly why
 that example was added in Task 6 beyond the brief's original 8 — real
-production configs (`neurolibre_build_latest_preview_myst`,
-`neurolibre_build_latest_noexec_myst`, `neurolibre_build_production_myst` in
-`config/settings-production.yml`) combine `send_only_mapped: true` with
-`query_params`.
+production configs combine `send_only_mapped: true` with `query_params` in
+five services in `config/settings-production.yml`:
+`neurolibre_build_latest_preview_myst`, `neurolibre_build_latest_noexec_myst`,
+`neurolibre_build_latest_noexec_nocache_myst`,
+`neurolibre_build_production_noexec_myst`, and
+`neurolibre_build_production_myst`.
 
 **Why it looks wrong:** the flag name reads as "send only the mapped data,"
 i.e. a total restriction on the outbound payload. It's actually a partial
@@ -161,7 +167,7 @@ data a `send_only_mapped` service actually transmits.
 
 **What fixing it would change:** making `send_only_mapped` also gate
 `query_params` would strip `commit_hash`/`is_prod` (and similar) from the
-three myst-build services above, which currently rely on those values
+five myst-build services above, which currently rely on those values
 reaching the API. That would break those services today.
 
 **Recommendation:** no action — this is working as currently relied upon.
@@ -199,12 +205,14 @@ that uses `data_from_issue` is ever added.
 
 ## C. What the wire actually carries for ~13 zenodo/binder/sync/production calls
 
-The single most load-bearing fact from this characterization work: for the
-NeuroLibre auth POST services that are **not** `send_only_mapped`,
-`data_from_issue` in `config/settings-production.yml` is always exactly
-`[target-repository]` and nothing else, and the resulting request body is
-just `{"id":N,"repository_url":U}` — `data_from_issue` contributes nothing
-extra to the wire.
+The single most load-bearing fact from this characterization work: of the 15
+NeuroLibre auth POST services that are **not** `send_only_mapped`, 13 carry
+`data_from_issue: [target-repository]` and nothing else, and for those 13 the
+resulting request body is just `{"id":N,"repository_url":U}` —
+`data_from_issue` contributes nothing extra to the wire. The remaining 2
+(`neurolibre_zenodo_status`, `neurolibre_sync_pdf`) have no `data_from_issue`
+at all and send only `{"id":N}`. 13 + 2 = 15 accounts for every
+non-`send_only_mapped` auth POST service.
 
 Verified directly against `config/settings-production.yml` and
 `app/workers/external_service_worker.rb`:
