@@ -107,9 +107,20 @@ describe Neurolibre::CoarResponder do
       # can't connect for real. Sequel ships an in-process "mock" adapter for
       # exactly this: it satisfies Model's schema introspection without any
       # external driver or database, so the class can load and we can then
-      # stub away every method we actually exercise below.
+      # stub away every method we actually exercise below. We guard on
+      # ENV['DATABASE_URL'] rather than Sequel::DATABASES.any? because the
+      # latter only asks "does some connection already exist" -- true even
+      # when another spec file grabbed the default DB slot for unrelated
+      # reasons. What we actually need to know is "is a real database
+      # configured for this suite", and ENV['DATABASE_URL'] is exactly the
+      # signal spec/coar_notify/models/notification_spec.rb uses to decide
+      # whether to pend its own specs. Keying on the same variable keeps the
+      # two files in agreement regardless of run order: if DATABASE_URL is
+      # set, we defer to the real connection notification_spec.rb expects;
+      # otherwise we connect the mock here so this describe block's own
+      # doubles have something legal to stub.
       before(:all) do
-        Sequel.connect("mock://postgres") unless Sequel::DATABASES.any?
+        Sequel.connect("mock://postgres") unless ENV['DATABASE_URL']
       end
 
       it "should report when there are no notifications" do
