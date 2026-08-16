@@ -5,7 +5,7 @@ describe RemindersResponder do
   before do
     settings = { env: { bot_github_user: "botsci" }}
     @responder = RemindersResponder.new(settings, {})
-    @responder.context = OpenStruct.new(issue_body: "", sender: "editor21")
+    @responder.context = OpenStruct.new(issue_body: "", issue_title: "", sender: "editor21")
     disable_github_calls_for(@responder)
   end
 
@@ -56,6 +56,19 @@ describe RemindersResponder do
       @responder.process_message(msg)
     end
 
+    it "should be case insensitive with the editor's GitHub handles" do
+      msg = "@botsci remind @eDItoR21 in 5 weeks"
+      @responder.match_data = @responder.event_regex.match(msg)
+      in_five_weeks = Chronic.parse("in 5 weeks")
+      expect(@responder).to receive(:target_time).with("5", "weeks").and_return(in_five_weeks)
+      expected_msg = ":wave: @editor21, please take a look at the state of the submission (this is an automated reminder)."
+      expect(AsyncMessageWorker).to receive(:perform_at).with(in_five_weeks, @responder.locals, expected_msg)
+      expect(ReviewReminderWorker).to_not receive(:perform_at)
+      expect(@responder).to receive(:respond).with("Reminder set for @editor21 in 5 weeks")
+
+      @responder.process_message(msg)
+    end
+
     it "should respond success message and schedule worker run for 'me'" do
       msg = "@botsci remind me in 15 days"
       @responder.match_data = @responder.event_regex.match(msg)
@@ -88,6 +101,98 @@ describe RemindersResponder do
       expect(ReviewReminderWorker).to receive(:perform_at).with(in_four_days, @responder.locals, "@author", true)
       @responder.process_message(msg)
     end
+
+    it "should be case insensitive with the reviewers GitHub handles" do
+      msg = "@botsci remind @ReVieWEr42 in 3 weeks"
+      @responder.match_data = @responder.event_regex.match(msg)
+      expect(ReviewReminderWorker).to receive(:perform_at)
+      expect(@responder).to receive(:respond).with("Reminder set for @ReVieWEr42 in 3 weeks")
+
+      @responder.process_message(msg)
+    end
+
+    it "should be case insensitive with the authors GitHub handles" do
+      msg = "@botsci remind @AUTHor in 4 days"
+      @responder.match_data = @responder.event_regex.match(msg)
+
+      in_four_days = Chronic.parse("in 4 days")
+      expect(@responder).to receive(:target_time).with("4", "days").and_return(in_four_days)
+
+      expect(ReviewReminderWorker).to receive(:perform_at).with(in_four_days, @responder.locals, "@AUTHor", true)
+      @responder.process_message(msg)
+    end
+
+    it "should allow reviewer to set a self-reminder" do
+      @responder.context.sender = "reviewer33"
+      msg = "@botsci remind @reviewer33 in 3 weeks"
+      @responder.match_data = @responder.event_regex.match(msg)
+      expect(AsyncMessageWorker).to receive(:perform_at)
+      expect(ReviewReminderWorker).to_not receive(:perform_at)
+      expect(@responder).to receive(:respond).with("Reminder set for @reviewer33 in 3 weeks")
+
+      @responder.process_message(msg)
+    end
+
+    it "should not allow reviewers to set reminders for others" do
+      @responder.context.sender = "reviewer33"
+      msg = "@botsci remind @reviewer42 in 3 weeks"
+      @responder.match_data = @responder.event_regex.match(msg)
+      expect(AsyncMessageWorker).to_not receive(:perform_at)
+      expect(ReviewReminderWorker).to_not receive(:perform_at)
+      expect(@responder).to receive(:respond).with("Reviewers can only set reminders to themselves.")
+
+      @responder.process_message(msg)
+    end
+
+    it "should allow author to set a self-reminder" do
+      @responder.context.sender = "author"
+      msg = "@botsci remind @author in 3 weeks"
+      @responder.match_data = @responder.event_regex.match(msg)
+      expect(AsyncMessageWorker).to receive(:perform_at)
+      expect(ReviewReminderWorker).to_not receive(:perform_at)
+      expect(@responder).to receive(:respond).with("Reminder set for @author in 3 weeks")
+
+      @responder.process_message(msg)
+    end
+
+    it "should not allow author to set reminders for others" do
+      @responder.context.sender = "author"
+      msg = "@botsci remind @reviewer42 in 3 weeks"
+      @responder.match_data = @responder.event_regex.match(msg)
+      expect(AsyncMessageWorker).to_not receive(:perform_at)
+      expect(ReviewReminderWorker).to_not receive(:perform_at)
+      expect(@responder).to receive(:respond).with("Authors can only set reminders to themselves.")
+
+      @responder.process_message(msg)
+    end
+
+    it "should set reminders for multiple users" do
+      msg = "@botsci remind @reviewer33, @reviewer42 in 2 weeks"
+      @responder.match_data = @responder.event_regex.match(msg)
+      expect(ReviewReminderWorker).to receive(:perform_at).twice
+      expect(@responder).to receive(:respond).with("Reminder set for @reviewer33, @reviewer42 in 2 weeks")
+
+      @responder.process_message(msg)
+    end
+
+    it "should respond error if any user in a multiple reminder is invalid" do
+      msg = "@botsci remind @reviewer33, @wrongperson in 2 weeks"
+      @responder.match_data = @responder.event_regex.match(msg)
+      expect(ReviewReminderWorker).to_not receive(:perform_at)
+      expect(@responder).to receive(:respond).with("@wrongperson doesn't seem to be a reviewer or author for this submission.")
+
+      @responder.process_message(msg)
+    end
+
+    it "should not allow reviewer to set reminders for multiple including others" do
+      @responder.context.sender = "reviewer33"
+      msg = "@botsci remind @reviewer33, @reviewer42 in 2 weeks"
+      @responder.match_data = @responder.event_regex.match(msg)
+      expect(ReviewReminderWorker).to_not receive(:perform_at)
+      expect(@responder).to receive(:respond).with("Reviewers can only set reminders to themselves.")
+
+      @responder.process_message(msg)
+    end
   end
 
   describe "configurable targets" do
@@ -102,6 +207,16 @@ describe RemindersResponder do
     it "targets has default values for reviewers, authors and sender" do
       @responder.params = {}
       expect(@responder.targets).to eq(["@author", "@reviewer33", "@reviewer42", "@editor21"])
+    end
+
+    it "targets includer reviewers list, authors list and sender" do
+      @responder.params = {}
+      expect(@responder.targets.sort).to eq((@responder.reviewers_list + @responder.authors_list + [@responder.sender_user]).sort)
+    end
+
+    it "include sender_user" do
+      @responder.params = {}
+      expect(@responder.sender_user).to eq("@editor21")
     end
 
     it "use default value if no custom reviewers value set" do

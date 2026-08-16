@@ -39,7 +39,7 @@ class PaperFile
   end
 
   def bibtex_path
-    @bibtex_path ||= "#{File.dirname(paper_path)}/#{bibtex_filename}"
+    @bibtex_path ||= "#{File.dirname(paper_path)}/#{File.basename(bibtex_filename.to_s)}"
   end
 
   def bibtex_filename
@@ -64,7 +64,7 @@ class PaperFile
 
     if Dir.exist? search_path
       Find.find(search_path).each do |path|
-        if path =~ /paper\.tex$|paper\.md$/
+        if path =~ /\/paper\.tex$|\/paper\.md$/
           paper_path = path
           break
         end

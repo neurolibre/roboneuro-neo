@@ -1,10 +1,9 @@
 Installation
 ============
 
-Buffy functions by monitoring events that are sent from a GitHub repository (e.g., openjournals/joss-reviews). Based on the information in these events, Buffy determines whether and how to respond by passing the event data to different [Responders](https://api.rubyonrails.org/v4.1/classes/ActionController/Responder.html).
+Buffy functions by monitoring events that are sent from a GitHub repository (e.g., openjournals/joss-reviews). Based on the information in these events, Buffy determines whether and how to respond by passing the event data to different [Responders](./available_responders).
 
-You can fork Buffy and configure the responders you want to use for a particular repository, and the fork doesn't necessarily
-need to be hosted under the same GitHub user or organization (as the repository where it will be used). For Buffy to be operational, it must be running either through a local installation or deployment to a platform. The following components are necessary for this setup:
+You can fork Buffy and configure the responders you want to use for a particular repository, and the fork doesn't necessarily need to be hosted under the same GitHub user or organization (as the repository where it will be used). For Buffy to be operational, it must be running either through a local installation or deployment to a platform. The following components are necessary for this setup:
 
 - A GitHub user with administrative permissions on the target repository (typically a member of the organization that owns the repository) is required to act as the bot.
 - An instance of Buffy running
@@ -36,8 +35,7 @@ This will be the "user" responding to the commands issued from a reviews reposit
 Some applications and services must be available to use by Buffy:
 
 - **[Redis](https://redis.io/)**: To process background jobs Buffy needs `redis` installed.
-- **[Gitinspector](https://github.com/ejwa/gitinspector)**: The *Respository Checks Responder* performs a statistical analysis using it.
-- **[cloc](https://github.com/AlDanial/cloc)**: The *Respository Checks Responder* can analyze source code, to run this check `cloc` is used.
+- **[cloc](https://github.com/AlDanial/cloc)**: The *Repository Checks Responder* can analyze source code, to run this check `cloc` is used.
 
 #### Deployment
 
@@ -47,7 +45,6 @@ As an example, we will use [Heroku](https://www.heroku.com) to deploy Buffy. How
 
 - To process background jobs, Buffy needs a `redis` add-on, such as Heroku Redis or RedisGreen etc.
 - You can use [this Heroku buildpack](https://github.com/openjournals/heroku-buildpack-cloc) to install the `cloc` dependency.
-- You can install Gitinspector using npm by following the instructions [here](https://www.npmjs.com/package/gitinspector). If you plan to deploy to Heroku, you can add the `heroku/nodejs` buildpack to your app.
 
 **2.** In the app settings add the following Config Vars:
 

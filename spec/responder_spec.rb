@@ -61,7 +61,7 @@ describe Responder do
       expect(subject.authorized?(@context)).to be_truthy
     end
 
-    it "should be true if sender is listed in an autorized role in the issue" do
+    it "should be true if sender is listed in an authorized role in the issue" do
       subject.params = { authorized_roles_in_issue: 'reviewers' }
       @context[:issue_body] = "<!--reviewers-->@rev1, @sender<!--end-reviewers-->"
       subject.context = @context
@@ -70,7 +70,7 @@ describe Responder do
       expect(subject.authorized?(@context)).to be_truthy
     end
 
-    it "should be true if sender is not in an autorized role but is in authorized team" do
+    it "should be true if sender is not in an authorized role but is in authorized team" do
       @context[:issue_body] = "<!--reviewers-->@rev1, @rev2<!--end-reviewers-->"
       subject.params = { only: 'editors', authorized_roles_in_issue: 'reviewers'}
       subject.context = @context
@@ -79,7 +79,7 @@ describe Responder do
       expect(subject.authorized?(@context)).to be_truthy
     end
 
-    it "should be true if sender is not in an autorized team but is in authorized role" do
+    it "should be true if sender is not in an authorized team but is in authorized role" do
       @context[:issue_body] = "<!--reviewers-->@rev1, @sender<!--end-reviewers-->"
       subject.params = { only: 'editors', authorized_roles_in_issue: 'reviewers'}
       subject.context = @context
@@ -88,7 +88,7 @@ describe Responder do
       expect(subject.authorized?(@context)).to be_truthy
     end
 
-    it "should be true if sender is in an autorized team and in authorized role" do
+    it "should be true if sender is in an authorized team and in authorized role" do
       @context[:issue_body] = "<!--reviewers-->@rev1, @sender<!--end-reviewers-->"
       subject.params = { only: 'editors', authorized_roles_in_issue: 'reviewers'}
       subject.context = @context
@@ -335,6 +335,7 @@ describe Responder do
     before do
       @responder = described_class.new({ env: {bot_github_user: 'botsci'} }, {})
       @responder.context = OpenStruct.new(issue_id: 5,
+                                          issue_title: "Test submission",
                                           issue_author: "opener",
                                           repo: "openjournals/buffy",
                                           sender: "user33",
@@ -342,18 +343,18 @@ describe Responder do
     end
 
     it "should include basic config info" do
-      expected_locals = Sinatra::IndifferentHash[issue_id: 5, issue_author: "opener", bot_name: "botsci", repo: "openjournals/buffy", sender: "user33"]
+      expected_locals = Sinatra::IndifferentHash[issue_id: 5, issue_author: "opener", issue_title: "Test submission", bot_name: "botsci", repo: "openjournals/buffy", sender: "user33"]
       expect(@responder.locals).to eq(expected_locals)
     end
 
     it "should add info from the issue body if requested" do
       @responder.params = {data_from_issue: ["reviewer"]}
-      expected_locals = Sinatra::IndifferentHash[issue_id: 5, issue_author: "opener", bot_name: "botsci", repo: "openjournals/buffy", sender: "user33", "reviewer" => "@xuanxu"]
+      expected_locals = Sinatra::IndifferentHash[issue_id: 5, issue_author: "opener", issue_title: "Test submission", bot_name: "botsci", repo: "openjournals/buffy", sender: "user33", "reviewer" => "@xuanxu"]
       expect(@responder.locals).to eq(expected_locals)
     end
 
     it "should add info from the event_regex if present" do
-      expected_locals = Sinatra::IndifferentHash[issue_id: 5, issue_author: "opener", bot_name: "botsci", repo: "openjournals/buffy", sender: "user33", match_data_1: "@xuanxu"]
+      expected_locals = Sinatra::IndifferentHash[issue_id: 5, issue_author: "opener", issue_title: "Test submission", bot_name: "botsci", repo: "openjournals/buffy", sender: "user33", match_data_1: "@xuanxu"]
       @responder.event_regex = /\A@bot assign (.*) as editor\z/i
       @responder.match_data = @responder.event_regex.match("@bot assign @xuanxu as editor")
 

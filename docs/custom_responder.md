@@ -37,7 +37,7 @@ end
 
 ### Keyname
 
-Using `keyname` you can define the handle for the responder to be used in the configuration file. Using a symbol is ok.
+Using `keyname` you can define the handle for the responder to be used in the configuration file. Using a symbol is OK.
 
 For our example we'll just use _clock_:
 
@@ -74,7 +74,7 @@ When an event is sent from the reviews repository to Buffy, only responders that
 #### Event regex
 The _@event_regex_ variable is where the syntax of every specific command is declared. If it is `nil` the responder will respond to every event that matches _@event_action_.
 
-Inside this method you have available the name of the bot in the `@botname` instace variable and all the parameters for this responder from the config file in the `@params` instance variable.
+Inside this method you have available the name of the bot in the `@botname` instance variable and all the parameters for this responder from the config file in the `@params` instance variable.
 
 For our example, we will be listening to comments and we want the command to be "what time is it?":
 ```ruby
@@ -119,7 +119,7 @@ now the command must be added to the config file or the responder will error and
     clock:
       command: tell me the time
 ...
-````
+```
 
 But we don't want to be too strict so, we'll allow the command to be changed but by default we'll have one. For that we'll use an auxiliary instance method:
 

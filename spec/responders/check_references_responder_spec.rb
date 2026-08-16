@@ -26,10 +26,21 @@ describe CheckReferencesResponder do
   end
 
   describe "#process_message" do
-    let(:expected_locals) { {"bot_name" => "botsci", "issue_author" => nil, "issue_id" => nil, "repo" => nil, "sender" => nil} }
+    let(:expected_locals) { {"bot_name" => "botsci", "issue_author" => nil, "issue_title" => nil, "issue_id" => nil, "repo" => nil, "sender" => nil} }
 
     it "should respond an error message if no url" do
       expect(@responder).to receive(:respond).with("I couldn't find the URL for the target repository")
+      @responder.process_message("@botsci check references")
+    end
+
+    it "should not react to the comment if no url" do
+      expect(@responder).to_not receive(:react_to_comment)
+      @responder.process_message("@botsci check references")
+    end
+
+    it "should react to the comment when dispatching worker" do
+      @responder.context.issue_body += "<!--target-repository-->PAPERURL<!--end-target-repository-->"
+      expect(@responder).to receive(:react_to_comment).with("eyes")
       @responder.process_message("@botsci check references")
     end
 

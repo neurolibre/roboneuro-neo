@@ -6,8 +6,8 @@ source 'https://rubygems.org'
 ruby ENV.fetch("CUSTOM_RUBY_VERSION", "3.3.12")
 
 gem 'octokit'
-gem 'sinatra', '4.1.1'
-gem 'sinatra-contrib', '4.1.1'
+gem 'sinatra', '4.2.1'
+gem 'sinatra-contrib', '4.2.1'
 gem 'openssl'
 gem 'puma'
 gem 'sidekiq'

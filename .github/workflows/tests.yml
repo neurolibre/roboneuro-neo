@@ -12,14 +12,15 @@ jobs:
       matrix:
         # Exact versions: the Gemfile declares a ruby version, so the
         # installed one must match it exactly. 3.3.12 is what production runs.
-        ruby-version: ['3.3.12', '3.4.10']
+        # 4.0.2 added to track upstream's newer coverage.
+        ruby-version: ['3.3.12', '3.4.10', '4.0.2']
         failure-allowed: [false]
     env:
       # Overrides the Gemfile's default so each matrix entry declares the
       # ruby it actually installed.
       CUSTOM_RUBY_VERSION: ${{ matrix.ruby-version }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:

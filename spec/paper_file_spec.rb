@@ -54,6 +54,16 @@ describe PaperFile do
       expect(YAML).to receive(:load_file).with("./doc/paper.md").and_return({'bibliography' => 'references.bib'})
       expect(subject.bibtex_path).to eq("./doc/references.bib")
     end
+
+    it "should clamp the bibliography filename to its basename to prevent path traversal" do
+      expect(YAML).to receive(:load_file).with("./doc/paper.md").and_return({'bibliography' => '../../../../etc/hosts'})
+      expect(subject.bibtex_path).to eq("./doc/hosts")
+    end
+
+    it "should strip leading directories from the bibliography filename" do
+      expect(YAML).to receive(:load_file).with("./doc/paper.md").and_return({'bibliography' => 'subdir/refs.bib'})
+      expect(subject.bibtex_path).to eq("./doc/refs.bib")
+    end
   end
 
   describe "#bib" do
@@ -144,7 +154,7 @@ describe PaperFile do
 
     it "should return a nil PaperFile if no paper file found" do
       expect(Dir).to receive(:exist?).with("/repo/path/").and_return(true)
-      allow(Find).to receive(:find).with("/repo/path/").and_return(["lib/papers.pdf", "./docs", "app"])
+      allow(Find).to receive(:find).with("/repo/path/").and_return(["lib/papers.pdf", "lib/other_paper.md", "./docs", "app"])
 
       paper_file = PaperFile.find("/repo/path/")
 
