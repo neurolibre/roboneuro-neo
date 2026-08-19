@@ -1,4 +1,5 @@
 require_relative "./spec_helper.rb"
+require 'tmpdir'
 
 describe PaperFile do
 
@@ -68,7 +69,7 @@ describe PaperFile do
 
   describe "#bib" do
     it "should read bibtex file" do
-      expect(subject).to receive(:bibtex_path).twice.and_return(fixture("paper.bib"))
+      allow(subject).to receive(:bibtex_paths).and_return([fixture("paper.bib")])
       bib = subject.bib
       expect(bib.data.size).to eq(6)
       expect(bib.errors).to be_empty
@@ -76,7 +77,7 @@ describe PaperFile do
     end
 
     it "should find lexical errors" do
-      expect(subject).to receive(:bibtex_path).twice.and_return(fixture("paper_with_errors.bib"))
+      allow(subject).to receive(:bibtex_paths).and_return([fixture("paper_with_errors.bib")])
 
       level = BibTeX.log.level
       BibTeX.log.level = "ERROR"
@@ -92,7 +93,7 @@ describe PaperFile do
 
   describe "#bibtex_entries" do
     it "should read bibtex file" do
-      expect(subject).to receive(:bibtex_path).twice.and_return(fixture("paper.bib"))
+      allow(subject).to receive(:bibtex_paths).and_return([fixture("paper.bib")])
       bibtex_entries = subject.bibtex_entries
       expect(bibtex_entries.size).to eq(6)
       expect(bibtex_entries.first.title.value).to eq("The NumPy Array: A Structure for Efficient Numerical Computation")
@@ -102,7 +103,7 @@ describe PaperFile do
     end
 
     it "should parse latex except for doi field" do
-      expect(subject).to receive(:bibtex_path).twice.and_return(fixture("paper.bib"))
+      allow(subject).to receive(:bibtex_paths).and_return([fixture("paper.bib")])
       bibtex_entries = subject.bibtex_entries
       expect(bibtex_entries.size).to eq(6)
       expect(bibtex_entries.last.title.value).to eq("The LaTeX test: A Structure")
@@ -113,12 +114,13 @@ describe PaperFile do
     end
 
     it "should be empty if errors parsing the file" do
+      allow(subject).to receive(:bibtex_paths).and_return([fixture("paper.bib")])
       expect(BibTeX).to receive(:open).and_raise BibTeX::ParseError
       expect(subject.bibtex_entries).to eq([])
     end
 
     it "should set bibtex_error if lexical errors found" do
-      expect(subject).to receive(:bibtex_path).twice.and_return(fixture("paper_with_errors.bib"))
+      allow(subject).to receive(:bibtex_paths).and_return([fixture("paper_with_errors.bib")])
 
       level = BibTeX.log.level
       BibTeX.log.level = "ERROR"
@@ -160,6 +162,49 @@ describe PaperFile do
 
       expect(paper_file).to be_kind_of PaperFile
       expect(paper_file.paper_path).to be_nil
+    end
+  end
+
+  describe "MyST papers" do
+    around(:each) do |example|
+      Dir.mktmpdir do |dir|
+        @clone = dir
+        example.run
+      end
+    end
+
+    def myst_paper(frontmatter, project, bibs = { "paper.bib" => File.read(fixture("paper.bib")) })
+      File.write(File.join(@clone, "paper.md"), "---\n#{frontmatter}---\n\n# Introduction\n")
+      File.write(File.join(@clone, "myst.yml"), "version: 1\nproject:\n#{project}")
+      bibs.each { |name, content| File.write(File.join(@clone, name), content) }
+
+      PaperFile.find(@clone)
+    end
+
+    it "should read the bibliography declared in myst.yml when the frontmatter omits it" do
+      paper = myst_paper("title: An OCT paper\n", "  bibliography:\n    - paper.bib\n")
+
+      expect(paper.bibtex_entries.size).to eq(6)
+      expect(paper.bibtex_error).to be_nil
+    end
+
+    it "should merge the entries of every bibliography declared in myst.yml" do
+      second_bib = "@article{extra,\n  title = {An extra reference},\n  doi = {10.1000/extra}\n}\n"
+      paper = myst_paper("title: An OCT paper\n",
+                         "  bibliography:\n    - paper.bib\n    - extra.bib\n",
+                         { "paper.bib" => File.read(fixture("paper.bib")), "extra.bib" => second_bib })
+
+      expect(paper.bibtex_entries.size).to eq(7)
+      expect(paper.bibtex_entries.map { |entry| entry.key.to_s }).to include("numpy", "extra")
+      expect(paper.bibtex_error).to be_nil
+    end
+
+    it "should report a missing bibliography instead of raising when neither file declares one" do
+      paper = myst_paper("title: An OCT paper\n", "  title: An OCT project\n")
+
+      expect { paper.bibtex_entries }.to_not raise_error
+      expect(paper.bibtex_entries).to eq([])
+      expect(paper.bibtex_error).to match(/bibliography/i)
     end
   end
 
