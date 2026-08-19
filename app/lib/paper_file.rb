@@ -1,5 +1,7 @@
 require 'bibtex'
 
+require_relative './paper_metadata'
+
 class PaperFile
   attr_accessor :paper_path
   attr_accessor :bibtex_entries
