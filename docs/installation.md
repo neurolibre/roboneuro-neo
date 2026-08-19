@@ -36,6 +36,7 @@ Some applications and services must be available to use by Buffy:
 
 - **[Redis](https://redis.io/)**: To process background jobs Buffy needs `redis` installed.
 - **[cloc](https://github.com/AlDanial/cloc)**: The *Repository Checks Responder* can analyze source code, to run this check `cloc` is used.
+- **[git](https://git-scm.com/)**: The *DOI* and *Repository Checks* responders clone the target repository before inspecting it, so a `git` binary must be on `PATH`.
 
 #### Deployment
 
@@ -45,6 +46,11 @@ As an example, we will use [Heroku](https://www.heroku.com) to deploy Buffy. How
 
 - To process background jobs, Buffy needs a `redis` add-on, such as Heroku Redis or RedisGreen etc.
 - You can use [this Heroku buildpack](https://github.com/openjournals/heroku-buildpack-cloc) to install the `cloc` dependency.
+- On the `heroku-24` stack the run image no longer includes `git`, so cloning fails at runtime with `No such file or directory - git (Errno::ENOENT)`. The `Aptfile` in this repo reinstalls it through the [apt buildpack](https://github.com/heroku/heroku-buildpack-apt), which must be placed **before** `heroku/ruby`:
+
+        $ heroku buildpacks:add --index 1 heroku-community/apt
+
+  The buildpack unpacks packages under `/app/.apt` rather than `/usr`, and the Ubuntu `git` binary looks for its helper programs in the compiled-in `/usr/lib/git-core`. `.profile.d/apt-git.sh` exports `GIT_EXEC_PATH` to point at the relocated directory; without it `git` cannot find `git-remote-https` and every clone of an `https://` URL fails.
 
 **2.** In the app settings add the following Config Vars:
 
