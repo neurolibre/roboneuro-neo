@@ -1,6 +1,6 @@
 require_relative "../../spec_helper.rb"
 
-# The commands that describe a paper's data (weft draft, check, confirm) and clean up the preview server after the
+# The commands that describe a paper's data (crosswalk draft, check, confirm) and clean up the preview server after the
 # technical screening. Each recognises its command, checks who wrote it, and sends the issue, the repository and
 # the comment to the server, which does the rest and replies on the issue.
 
@@ -34,78 +34,78 @@ def payload(sent)
   service["mapping"].to_h { |k, v| [k, locals[v]] }
 end
 
-describe Neurolibre::WeftDraftResponder do
-  let(:responder) { server_command(described_class, "https://preprint.example.org/api/weft/draft") }
+describe Neurolibre::CrosswalkDraftResponder do
+  let(:responder) { server_command(described_class, "https://preprint.example.org/api/crosswalk/draft") }
 
   it "recognises only its command" do
-    expect(responder.event_regex).to match("@roboneuro weft draft")
-    expect(responder.event_regex).to match("@roboneuro weft draft.")
-    expect(responder.event_regex).not_to match("@roboneuro weft check")
-    expect(responder.event_regex).not_to match("@roboneuro weft drafts")
+    expect(responder.event_regex).to match("@roboneuro crosswalk draft")
+    expect(responder.event_regex).to match("@roboneuro crosswalk draft.")
+    expect(responder.event_regex).not_to match("@roboneuro crosswalk check")
+    expect(responder.event_regex).not_to match("@roboneuro crosswalk drafts")
   end
 
   it "sends the issue, the repository and the command's comment" do
-    expect(payload(say(responder, "@roboneuro weft draft"))).to eq(
+    expect(payload(say(responder, "@roboneuro crosswalk draft"))).to eq(
       "id" => 52, "repository_url" => "https://github.com/someone/seed-dispersal", "comment_id" => 555)
   end
 
   it "is for the editor and the reviewers" do
-    expect(payload(say(responder, "@roboneuro weft draft", sender: "Second-Reviewer"))["id"]).to eq(52)
+    expect(payload(say(responder, "@roboneuro crosswalk draft", sender: "Second-Reviewer"))["id"]).to eq(52)
     expect(responder).to receive(:respond).with(/the issue's editor or a reviewer/)
-    expect(say(responder, "@roboneuro weft draft", sender: "the-author")).to be_nil
+    expect(say(responder, "@roboneuro crosswalk draft", sender: "the-author")).to be_nil
   end
 end
 
-describe Neurolibre::WeftCheckResponder do
-  let(:responder) { server_command(described_class, "https://preprint.example.org/api/weft/check") }
+describe Neurolibre::CrosswalkCheckResponder do
+  let(:responder) { server_command(described_class, "https://preprint.example.org/api/crosswalk/check") }
 
   it "recognises the command with and without a comment to check" do
-    expect(responder.event_regex).to match("@roboneuro weft check")
-    expect(responder.event_regex).to match("@roboneuro weft check at 4242")
-    expect(responder.event_regex).to match("@roboneuro weft check\n```yaml\nfields: []\n```")
-    expect(responder.event_regex).not_to match("@roboneuro weft confirm")
+    expect(responder.event_regex).to match("@roboneuro crosswalk check")
+    expect(responder.event_regex).to match("@roboneuro crosswalk check at 4242")
+    expect(responder.event_regex).to match("@roboneuro crosswalk check\n```yaml\nfields: []\n```")
+    expect(responder.event_regex).not_to match("@roboneuro crosswalk confirm")
   end
 
   it "passes the comment named with at" do
-    expect(payload(say(responder, "@roboneuro weft check at 4242"))).to include("at" => 4242, "comment_id" => 555)
+    expect(payload(say(responder, "@roboneuro crosswalk check at 4242"))).to include("at" => 4242, "comment_id" => 555)
   end
 
   it "leaves out a comment that was not named" do
-    expect(payload(say(responder, "@roboneuro weft check"))).not_to have_key("at")
+    expect(payload(say(responder, "@roboneuro crosswalk check"))).not_to have_key("at")
   end
 
   it "is for the author, the editor and the reviewers" do
-    expect(say(responder, "@roboneuro weft check", sender: "the-author")).not_to be_nil
+    expect(say(responder, "@roboneuro crosswalk check", sender: "the-author")).not_to be_nil
     expect(responder).to receive(:respond).with(/the paper's author, the issue's editor or a reviewer/)
-    expect(say(responder, "@roboneuro weft check", sender: "a-passer-by")).to be_nil
+    expect(say(responder, "@roboneuro crosswalk check", sender: "a-passer-by")).to be_nil
   end
 end
 
-describe Neurolibre::WeftConfirmResponder do
-  let(:responder) { server_command(described_class, "https://preprint.example.org/api/weft/confirm") }
+describe Neurolibre::CrosswalkConfirmResponder do
+  let(:responder) { server_command(described_class, "https://preprint.example.org/api/crosswalk/confirm") }
 
   it "recognises the command in its forms" do
-    ["@roboneuro weft confirm", "@roboneuro weft confirm at 77", "@roboneuro weft confirm fields a, b",
-     "@roboneuro weft confirm fields a, b at 77", "@roboneuro weft confirm\n```yaml\nx: 1\n```"].each do |c|
+    ["@roboneuro crosswalk confirm", "@roboneuro crosswalk confirm at 77", "@roboneuro crosswalk confirm fields a, b",
+     "@roboneuro crosswalk confirm fields a, b at 77", "@roboneuro crosswalk confirm\n```yaml\nx: 1\n```"].each do |c|
       expect(responder.event_regex).to match(c)
     end
-    expect(responder.event_regex).not_to match("@roboneuro weft confirmed")
+    expect(responder.event_regex).not_to match("@roboneuro crosswalk confirmed")
   end
 
   it "passes the fields and the comment named" do
-    expect(payload(say(responder, "@roboneuro weft confirm fields depth, site at 77"))).to include(
+    expect(payload(say(responder, "@roboneuro crosswalk confirm fields depth, site at 77"))).to include(
       "fields" => "depth, site", "at" => 77, "comment_id" => 555)
-    expect(payload(say(responder, "@roboneuro weft confirm at 77 fields depth"))).to include(
+    expect(payload(say(responder, "@roboneuro crosswalk confirm at 77 fields depth"))).to include(
       "fields" => "depth", "at" => 77)
   end
 
   it "confirms everything when no fields are named" do
-    expect(payload(say(responder, "@roboneuro weft confirm"))).not_to have_key("fields")
+    expect(payload(say(responder, "@roboneuro crosswalk confirm"))).not_to have_key("fields")
   end
 
   it "answers a line it cannot read with the forms it takes, and sends nothing" do
-    expect(responder).to receive(:respond).with(/`@roboneuro weft confirm fields <names>`/)
-    expect(say(responder, "@roboneuro weft confirm everything please")).to be_nil
+    expect(responder).to receive(:respond).with(/`@roboneuro crosswalk confirm fields <names>`/)
+    expect(say(responder, "@roboneuro crosswalk confirm everything please")).to be_nil
   end
 end
 

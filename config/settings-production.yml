@@ -648,9 +648,9 @@ buffy:
           id: issue_id
           repository_url: target-repository
         silent: true
-    neurolibre_weft_draft:
+    neurolibre_crosswalk_draft:
       external_call:
-        url: "https://preprint.neurolibre.org/api/weft/draft"
+        url: "https://preprint.neurolibre.org/api/crosswalk/draft"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
@@ -661,9 +661,9 @@ buffy:
           id: issue_id
           repository_url: target-repository
         silent: true
-    neurolibre_weft_check:
+    neurolibre_crosswalk_check:
       external_call:
-        url: "https://preprint.neurolibre.org/api/weft/check"
+        url: "https://preprint.neurolibre.org/api/crosswalk/check"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
@@ -674,9 +674,9 @@ buffy:
           id: issue_id
           repository_url: target-repository
         silent: true
-    neurolibre_weft_confirm:
+    neurolibre_crosswalk_confirm:
       external_call:
-        url: "https://preprint.neurolibre.org/api/weft/confirm"
+        url: "https://preprint.neurolibre.org/api/crosswalk/confirm"
         method: "post"
         headers:
           username: <%= ENV['PREVIEW_API_USER'] %>
