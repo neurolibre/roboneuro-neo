@@ -18,8 +18,8 @@ class CrosswalkConfirmResponder < Responder
   end
 
   def process_message(message)
-    unless sent_by?(:author, :editor, :reviewer)
-      respond("Only the paper's author, the issue's editor or a reviewer can ask for `@#{bot_name} crosswalk confirm`.")
+    unless sent_by?(:author, :editor, :reviewer, :editors)
+      respond("Only the paper's author, NeuroLibre's editors and the issue's reviewers can ask for `@#{bot_name} crosswalk confirm`.")
       return
     end
     rest = (match_data && match_data[1]).to_s.strip

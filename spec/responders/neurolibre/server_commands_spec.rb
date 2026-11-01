@@ -8,8 +8,8 @@ ISSUE_BODY = "<!--target-repository-->https://github.com/someone/seed-dispersal<
              "<!--editor-->@the-editor<!--end-editor-->" \
              "<!--reviewers-list-->@first-reviewer, @second-reviewer<!--end-reviewers-list-->"
 
-def server_command(klass, url)
-  responder = klass.new({ env: { bot_github_user: "roboneuro" } },
+def server_command(klass, url, teams: nil)
+  responder = klass.new({ env: { bot_github_user: "roboneuro" }, teams: teams },
                         { external_call: { url: url, method: "post",
                                            data_from_issue: ["target-repository"],
                                            mapping: { id: "issue_id", repository_url: "target-repository" } } })
@@ -51,7 +51,7 @@ describe Neurolibre::CrosswalkDraftResponder do
 
   it "is for the editor and the reviewers" do
     expect(payload(say(responder, "@roboneuro crosswalk draft", sender: "Second-Reviewer"))["id"]).to eq(52)
-    expect(responder).to receive(:respond).with(/the issue's editor or a reviewer/)
+    expect(responder).to receive(:respond).with(/NeuroLibre's editors and the issue's reviewers/)
     expect(say(responder, "@roboneuro crosswalk draft", sender: "the-author")).to be_nil
   end
 end
@@ -76,7 +76,7 @@ describe Neurolibre::CrosswalkCheckResponder do
 
   it "is for the author, the editor and the reviewers" do
     expect(say(responder, "@roboneuro crosswalk check", sender: "the-author")).not_to be_nil
-    expect(responder).to receive(:respond).with(/the paper's author, the issue's editor or a reviewer/)
+    expect(responder).to receive(:respond).with(/the paper's author, NeuroLibre's editors and the issue's reviewers/)
     expect(say(responder, "@roboneuro crosswalk check", sender: "a-passer-by")).to be_nil
   end
 end
@@ -121,5 +121,33 @@ describe Neurolibre::PreviewCleanupResponder do
   it "passes the build to keep" do
     expect(payload(say(responder, "@roboneuro preview cleanup keep 2b3c4d5"))).to include("commit_hash" => "2b3c4d5")
     expect(payload(say(responder, "@roboneuro preview cleanup"))).not_to have_key("commit_hash")
+  end
+end
+
+# NeuroLibre's editors run these commands on any paper, whether or not the issue names them; the editors team is in
+# the settings as a list of logins or as a GitHub team, which GitHub is asked about.
+describe "who may ask for the crosswalk commands" do
+  it "lets a member of the editors team draft a paper the issue does not name them on" do
+    responder = server_command(Neurolibre::CrosswalkDraftResponder, "https://preprint.example.org/api/crosswalk/draft",
+                               teams: { editors: ["agah"] })
+    expect(say(responder, "@roboneuro crosswalk draft", sender: "Agah")).not_to be_nil
+  end
+
+  it "asks GitHub when the editors team is given by its id" do
+    responder = server_command(Neurolibre::CrosswalkCheckResponder, "https://preprint.example.org/api/crosswalk/check",
+                               teams: { editors: 3408147 })
+    github = double("github")
+    allow(responder).to receive(:github_client).and_return(github)
+    allow(github).to receive(:team_member?).with(3408147, "an-editor").and_return(true)
+    allow(github).to receive(:team_member?).with(3408147, "a-passer-by").and_return(false)
+    expect(say(responder, "@roboneuro crosswalk check", sender: "an-editor")).not_to be_nil
+    expect(say(responder, "@roboneuro crosswalk check", sender: "a-passer-by")).to be_nil
+  end
+
+  it "refuses someone in no role and says who may ask" do
+    responder = server_command(Neurolibre::CrosswalkDraftResponder, "https://preprint.example.org/api/crosswalk/draft",
+                               teams: { editors: ["agah"] })
+    expect(responder).to receive(:respond).with(/Only NeuroLibre.s editors and the issue.s reviewers/)
+    expect(say(responder, "@roboneuro crosswalk draft", sender: "the-author")).to be_nil
   end
 end

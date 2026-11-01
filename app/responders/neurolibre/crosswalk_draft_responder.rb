@@ -14,8 +14,8 @@ class CrosswalkDraftResponder < Responder
   end
 
   def process_message(message)
-    unless sent_by?(:editor, :reviewer)
-      respond("Only the issue's editor or a reviewer can ask for `@#{bot_name} crosswalk draft`.")
+    unless sent_by?(:editor, :reviewer, :editors)
+      respond("Only NeuroLibre's editors and the issue's reviewers can ask for `@#{bot_name} crosswalk draft`.")
       return
     end
     send_to_server
