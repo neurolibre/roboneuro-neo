@@ -137,7 +137,7 @@ buffy:
       - neurolibre_build_myst:
           only: editors
           command: "build (\\S+) myst at runtime (\\S+)"
-          description: "Builds myst article. First argument is the commit hash, second is the binder hash."
+          description: "Builds the MyST preview at a given commit (first argument) with the image built at a given commit (second argument), reusing notebook outputs from earlier builds while they still apply."
           url: "https://preview.neurolibre.org/api/myst/build"
           headers:
             username: <%= ENV['PREVIEW_API_USER'] %>
@@ -173,7 +173,7 @@ buffy:
       - neurolibre_build_latest_preview_myst:
           only: editors
           command: "build myst preview"
-          description: "Builds myst article for preview from the latest commit"
+          description: "Builds the MyST preview from the latest commit with the latest image, reusing notebook outputs from earlier builds while the code, image and data are unchanged."
           url: "https://preview.neurolibre.org/api/myst/build"
           headers:
             username: <%= ENV['PREVIEW_API_USER'] %>
@@ -191,10 +191,32 @@ buffy:
             repository_url: target-repository
           send_only_mapped: true
           silent: true
+      - neurolibre_build_latest_preview_fresh_myst:
+          only: editors
+          command: "build myst preview fresh"
+          description: "Builds the MyST preview from the latest commit with the latest image, running every notebook again."
+          url: "https://preview.neurolibre.org/api/myst/build"
+          headers:
+            username: <%= ENV['PREVIEW_API_USER'] %>
+            password: <%= ENV['PREVIEW_API_KEY'] %>
+          data_from_issue:
+            - target-repository
+            - issue_id
+          query_params:
+            commit_hash: latest
+            binder_hash: latest
+            is_prod: false
+            build_cache: true
+            fresh_execution: true
+          mapping:
+            id: issue_id
+            repository_url: target-repository
+          send_only_mapped: true
+          silent: true
       - neurolibre_build_latest_noexec_myst:
           only: editors
           command: "build myst preview noexec"
-          description: "Builds myst article for preview from the latest commit"
+          description: "Builds the MyST preview from the latest commit in the base image, without the paper's packages: only notebook outputs cached by earlier builds are shown."
           url: "https://preview.neurolibre.org/api/myst/build"
           headers:
             username: <%= ENV['PREVIEW_API_USER'] %>
@@ -215,7 +237,7 @@ buffy:
       - neurolibre_build_latest_noexec_nocache_myst:
           only: editors
           command: "build myst preview noexec nocache"
-          description: "Builds myst article for preview from the latest commit"
+          description: "Builds the MyST preview from the latest commit in the base image, from scratch (for articles without notebooks)."
           url: "https://preview.neurolibre.org/api/myst/build"
           headers:
             username: <%= ENV['PREVIEW_API_USER'] %>
@@ -236,7 +258,7 @@ buffy:
       - neurolibre_build_production_noexec_myst:
           only: editors
           command: "build myst production noexec"
-          description: "Builds myst article for preview from the latest commit"
+          description: "Builds the production MyST article in the base image, reusing the notebook outputs cached by earlier production builds."
           url: "https://preview.neurolibre.org/api/myst/build"
           headers:
             username: <%= ENV['PREVIEW_API_USER'] %>
@@ -259,7 +281,7 @@ buffy:
       - neurolibre_build_production_myst:
           only: editors
           command: "build myst production"
-          description: "Builds myst article for production, executing notebooks"
+          description: "Builds the production MyST article from scratch, running every notebook in the paper's image."
           url: "https://preview.neurolibre.org/api/myst/build"
           headers:
             username: <%= ENV['PREVIEW_API_USER'] %>
@@ -273,6 +295,7 @@ buffy:
             binder_hash: latest
             is_prod: true
             build_cache: false
+            fresh_execution: true
           mapping:
             id: issue_id
             repository_url: target-repository
