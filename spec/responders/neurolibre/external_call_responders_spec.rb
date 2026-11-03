@@ -1,6 +1,6 @@
 require_relative "../../spec_helper.rb"
 
-# Characterization specs for the 15 structurally identical NeuroLibre
+# Characterization specs for the 16 structurally identical NeuroLibre
 # responders that dispatch to an external service. They differ only in
 # keyname and command regex; everything asserted here is inherited
 # behavior, which is exactly what an upstream merge can silently change.
@@ -26,6 +26,8 @@ describe "NeuroLibre external call responders" do
       { keyname: :neurolibre_sync_pdf,               command: "production sync pdf" },
     Neurolibre::ProductionStartResponder =>
       { keyname: :neurolibre_production_start,       command: "production start" },
+    Neurolibre::SakioriResponder =>
+      { keyname: :neurolibre_sakiori,                command: "sakiori" },
     Neurolibre::SyncMystResponder =>
       { keyname: :neurolibre_sync_myst,              command: "production sync myst" },
     Neurolibre::ZenodoCreateBucketsResponder =>

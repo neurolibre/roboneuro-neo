@@ -29,6 +29,7 @@ module ResponderParams
       Neurolibre::PreviewCleanupResponder         => { external_call: { url: "https://neurolibre.org" } },
       Neurolibre::PreviewServerStatusResponder    => { external_call: { url: "https://neurolibre.org" } },
       Neurolibre::ProductionStartResponder        => { external_call: { url: "https://neurolibre.org" } },
+      Neurolibre::SakioriResponder                => { external_call: { url: "https://neurolibre.org" } },
       Neurolibre::SyncMystResponder               => { external_call: { url: "https://neurolibre.org" } },
       Neurolibre::CrosswalkCheckResponder              => { external_call: { url: "https://neurolibre.org" } },
       Neurolibre::CrosswalkConfirmResponder            => { external_call: { url: "https://neurolibre.org" } },
