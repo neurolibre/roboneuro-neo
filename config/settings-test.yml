@@ -649,6 +649,7 @@ buffy:
         mapping:
           id: issue_id
           repository_url: target-repository
+        silent: true
     neurolibre_sync_myst:
       only: editors
       external_call:
